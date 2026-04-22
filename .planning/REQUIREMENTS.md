@@ -112,11 +112,29 @@ Requirement coperti da codice esistente. Diventano la baseline di partenza — n
 
 ## Traceability matrix
 
-Questa sezione verrà popolata dal roadmapper quando crea `ROADMAP.md` — mapperà ogni REQ-ID Active a una fase del roadmap.
+Mappatura REQ-ID → fase del `ROADMAP.md` (popolata il 2026-04-22 alla creazione del roadmap v1).
 
 | REQ-ID | Fase | Note |
 |---|---|---|
-| SEC-01..06 | TBD | — |
-| CLEAN-01..03 | TBD | — |
-| RIST-01..09 | TBD | — |
-| QUAL-01..02 | TBD | — |
+| SEC-01 | Phase 1 — Security & Cleanup | Rotazione chiavi (Supabase / Google OAuth / TMDB / Gemini / Groq) |
+| SEC-02 | Phase 1 — Security & Cleanup | Scrub `SETUP.md` con placeholder + warning |
+| SEC-03 | Phase 1 — Security & Cleanup | `.gitignore` tracciato e completo |
+| SEC-04 | Phase 1 — Security & Cleanup | `git rm -r --cached node_modules` |
+| SEC-05 | Phase 1 — Security & Cleanup | `git rm --cached .env.local` |
+| SEC-06 | Phase 1 — Security & Cleanup | Decisione esplicita rewrite history vs accept risk |
+| CLEAN-01 | Phase 1 — Security & Cleanup | DDL + RLS per `read_books`, `book_suggestions`, `watched_movies.status` |
+| CLEAN-02 | Phase 1 — Security & Cleanup | Commit dei file untracked (books feature, favicon, ANALISI_PROGETTO) |
+| CLEAN-03 | Phase 1 — Security & Cleanup | Clone pulito buildabile end-to-end |
+| RIST-01 | Phase 2 — Verticale Ristoranti | `src/lib/foursquare.js` (search / getPlace / getTrending) |
+| RIST-02 | Phase 2 — Verticale Ristoranti | Tabella `visited_restaurants` + RLS |
+| RIST-03 | Phase 2 — Verticale Ristoranti | Tabella `restaurant_suggestions` + RLS |
+| RIST-04 | Phase 2 — Verticale Ristoranti | `RistorantiPage.jsx` con 3 tab |
+| RIST-05 | Phase 2 — Verticale Ristoranti | `RestaurantModal.jsx` con tutte le azioni utente |
+| RIST-06 | Phase 2 — Verticale Ristoranti | AI suggerimenti ristoranti (Gemini + Groq fallback) |
+| RIST-07 | Phase 2 — Verticale Ristoranti | `NotificationsPage` + badge unread estesi |
+| RIST-08 | Phase 2 — Verticale Ristoranti | Voce sidebar + route `/ristoranti` |
+| RIST-09 | Phase 2 — Verticale Ristoranti | `.env.example` + `.env.local` con `VITE_FOURSQUARE_API_KEY` |
+| QUAL-01 | Phase 3 — Quality Baseline | React error boundary attorno ad `AppShell` |
+| QUAL-02 | Phase 3 — Quality Baseline | `res.ok` + error surfacing nei tre lib esterni |
+
+**Coverage:** 20 / 20 Active REQ-ID mappati — nessun orfano, nessun duplicato.
