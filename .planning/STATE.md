@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 
 ## Current Position
 
-Phase: 1 of 3 (Security & Cleanup)
+Phase: 1 of 3 (Security & Cleanup) — execution blocked until Phase 1 plan exists
 Plan: 0 of TBD in current phase
-Status: Ready to discuss
-Last activity: 2026-04-22 — Roadmap creato, 20 REQ-ID Active mappati su 3 fasi
+Status: Phase 2 context gathered ahead of execution; Phase 1 still to plan/execute first
+Last activity: 2026-04-22 — Phase 2 CONTEXT.md scritto (user-provided req.txt + 7 decisioni lockate)
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -42,7 +42,10 @@ Progress: [░░░░░░░░░░] 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-*(none yet — roadmap appena creato)*
+- 2026-04-22 — Phase 2: layer provider-agnostic `src/lib/placesProvider.js` + `foursquare.js` attivo in v1 (Google predisposto, non implementato). Aggiorna RIST-01 + PROJECT.md Key Decision durante Phase 2 execute.
+- 2026-04-22 — Phase 2: nuovo RIST-10 per `user_cities` (città preferite illimitate). Da aggiungere in REQUIREMENTS.md + ROADMAP traceability durante Phase 2 plan.
+- 2026-04-22 — Phase 2: rating mezzi voti (NUMERIC 0.5-5, pattern libri), non integer 1-5 come film.
+- 2026-04-22 — Phase 2: custom labels restano in `visited_restaurants.labels[]` (no tabella `user_labels`).
 
 ### Pending Todos
 
@@ -61,5 +64,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-22
-Stopped at: Roadmap v1 creato (3 fasi, 20/20 Active REQ mappati); in attesa di discussione con l'owner per Phase 1.
-Resume file: None
+Stopped at: Phase 2 context gathered (jump ahead of Phase 1 plan). User-provided req.txt è stato preservato come `02-USER-REQ.md`. 7 implementation decisions lockate in CONTEXT.md. Phase 1 resta il prossimo focus di esecuzione.
+Resume file: .planning/phases/02-verticale-ristoranti/02-CONTEXT.md
