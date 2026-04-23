@@ -28,7 +28,9 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Esiste una decisione documentata (in PROJECT.md Key Decisions o in un commento dedicato) su rewrite della git history vs accettazione del rischio; se la decisione è "rewrite", l'operazione è stata eseguita e verificata.
   4. `supabase_schema.sql` contiene DDL + RLS per `read_books`, `book_suggestions` e la colonna `watched_movies.status`, ed eseguendolo su un DB vuoto si ottiene lo stesso schema del DB di produzione.
   5. Un clone pulito su una macchina senza `.env.local` (ma con le env vars popolate) esegue `npm install && npm run dev` senza errori di import o build, e il routing `/cinema` e `/books` carica senza runtime error.
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 01-01-PLAN.md — Security cleanup + schema drift reconcile + commit untracked + defer SEC-01/SEC-06 to v2 (9 commits + 1 manual DDL push + clean-clone verify)
 
 ### Phase 2: Verticale Ristoranti
 **Goal**: L'utente ha una terza verticale "Ristoranti" funzionalmente paritaria a Cinema e Libri: ricerca Foursquare, tracking personale, consigli AI, invio a un amico con commento, integrazione in sidebar e notifiche.
@@ -61,6 +63,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Security & Cleanup | 0/TBD | Not started | - |
+| 1. Security & Cleanup | 0/1 | Not started | - |
 | 2. Verticale Ristoranti | 0/TBD | Not started | - |
 | 3. Quality Baseline | 0/TBD | Not started | - |
