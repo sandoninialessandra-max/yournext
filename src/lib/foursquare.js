@@ -1,10 +1,28 @@
 const FSQ_KEY = import.meta.env.VITE_FOURSQUARE_API_KEY
-const FSQ_BASE = 'https://api.foursquare.com/v3/places'
+const FSQ_BASE = 'https://places-api.foursquare.com/places'
+const FSQ_VERSION = '2025-06-17'
 
 function ensureKey() {
   if (!FSQ_KEY) {
     throw new Error('VITE_FOURSQUARE_API_KEY mancante — configura .env.local con la chiave Foursquare')
   }
+}
+
+function authHeaders() {
+  return {
+    Accept: 'application/json',
+    Authorization: `Bearer ${FSQ_KEY}`,
+    'X-Places-Api-Version': FSQ_VERSION,
+  }
+}
+
+async function fetchJson(url) {
+  const res = await fetch(url, { headers: authHeaders() })
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`Foursquare ${res.status}: ${body.slice(0, 200)}`)
+  }
+  return res.json()
 }
 
 function formatPlace(item) {
@@ -14,10 +32,10 @@ function formatPlace(item) {
   const address = loc.address || ''
   const photo = item.photos?.[0]
   return {
-    id: item.fsq_id,
+    id: item.fsq_place_id || item.fsq_id || item.id,
     name,
     address,
-    city: loc.locality || '',
+    city: loc.locality || loc.region || '',
     cuisine: item.categories?.[0]?.name || '',
     priceLevel: item.price ?? null,
     rating: item.rating ?? null,
@@ -26,8 +44,8 @@ function formatPlace(item) {
   }
 }
 
-const FIELDS_SEARCH = 'fsq_id,name,location,categories,price,rating,photos'
-const FIELDS_DETAIL = 'fsq_id,name,location,categories,price,rating,photos,description,hours,website'
+const FIELDS_SEARCH = 'fsq_place_id,name,location,categories,price,rating,photos'
+const FIELDS_DETAIL = 'fsq_place_id,name,location,categories,price,rating,photos,description,hours,website'
 
 export const foursquare = {
   async search(query, city) {
@@ -38,18 +56,13 @@ export const foursquare = {
       fields: FIELDS_SEARCH,
     })
     if (city) params.set('near', city)
-    const res = await fetch(`${FSQ_BASE}/search?${params.toString()}`, {
-      headers: { Accept: 'application/json', Authorization: FSQ_KEY },
-    })
-    const data = await res.json()
+    const data = await fetchJson(`${FSQ_BASE}/search?${params.toString()}`)
     return (data.results || []).map(formatPlace).filter(Boolean)
   },
   async getPlace(id) {
     ensureKey()
-    const res = await fetch(`${FSQ_BASE}/${id}?fields=${FIELDS_DETAIL}`, {
-      headers: { Accept: 'application/json', Authorization: FSQ_KEY },
-    })
-    return formatPlace(await res.json())
+    const data = await fetchJson(`${FSQ_BASE}/${id}?fields=${FIELDS_DETAIL}`)
+    return formatPlace(data)
   },
   async getPopular(city, category) {
     ensureKey()
@@ -60,10 +73,7 @@ export const foursquare = {
       fields: FIELDS_SEARCH,
     })
     if (city) params.set('near', city)
-    const res = await fetch(`${FSQ_BASE}/search?${params.toString()}`, {
-      headers: { Accept: 'application/json', Authorization: FSQ_KEY },
-    })
-    const data = await res.json()
+    const data = await fetchJson(`${FSQ_BASE}/search?${params.toString()}`)
     return (data.results || []).map(formatPlace).filter(Boolean)
   },
   coverUrl(photo) {
