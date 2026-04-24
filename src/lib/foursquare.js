@@ -1,23 +1,7 @@
-const FSQ_KEY = import.meta.env.VITE_FOURSQUARE_API_KEY
-const FSQ_BASE = 'https://places-api.foursquare.com/places'
-const FSQ_VERSION = '2025-06-17'
-
-function ensureKey() {
-  if (!FSQ_KEY) {
-    throw new Error('VITE_FOURSQUARE_API_KEY mancante — configura .env.local con la chiave Foursquare')
-  }
-}
-
-function authHeaders() {
-  return {
-    Accept: 'application/json',
-    Authorization: `Bearer ${FSQ_KEY}`,
-    'X-Places-Api-Version': FSQ_VERSION,
-  }
-}
+const FSQ_BASE = '/api/fsq'
 
 async function fetchJson(url) {
-  const res = await fetch(url, { headers: authHeaders() })
+  const res = await fetch(url, { headers: { Accept: 'application/json' } })
   if (!res.ok) {
     const body = await res.text().catch(() => '')
     throw new Error(`Foursquare ${res.status}: ${body.slice(0, 200)}`)
@@ -49,7 +33,6 @@ const FIELDS_DETAIL = 'fsq_place_id,name,location,categories,price,rating,photos
 
 export const foursquare = {
   async search(query, city) {
-    ensureKey()
     const params = new URLSearchParams({
       query,
       limit: '12',
@@ -60,12 +43,10 @@ export const foursquare = {
     return (data.results || []).map(formatPlace).filter(Boolean)
   },
   async getPlace(id) {
-    ensureKey()
     const data = await fetchJson(`${FSQ_BASE}/${id}?fields=${FIELDS_DETAIL}`)
     return formatPlace(data)
   },
   async getPopular(city, category) {
-    ensureKey()
     const params = new URLSearchParams({
       query: category || '',
       limit: '12',
