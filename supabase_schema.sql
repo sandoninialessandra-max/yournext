@@ -104,3 +104,62 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+-- =========================================
+-- ── LIBRI (CLEAN-01) ──────────────────────
+-- =========================================
+-- Appended 2026-04-22 to reconcile schema drift.
+-- Idempotent: IF NOT EXISTS on every statement → no-op on prod, full create on empty DB.
+
+-- 1. Backfill the missing status column on watched_movies
+ALTER TABLE watched_movies
+  ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'watched'
+  CHECK (status IN ('watched', 'wishlist'));
+
+-- 2. Libri letti / in lettura / wishlist (per-utente)
+CREATE TABLE IF NOT EXISTS read_books (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  book_id TEXT NOT NULL,
+  book_title TEXT NOT NULL,
+  book_cover TEXT,
+  book_year TEXT,
+  book_authors TEXT,
+  book_pages INTEGER,
+  status TEXT DEFAULT 'read' CHECK (status IN ('read', 'reading', 'wishlist')),
+  current_page INTEGER DEFAULT 0,
+  rating NUMERIC(2,1) CHECK (rating >= 0.5 AND rating <= 5),
+  is_favorite BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, book_id)
+);
+
+-- 3. Suggerimenti libri tra amici
+CREATE TABLE IF NOT EXISTS book_suggestions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  from_user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  to_user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  book_id TEXT NOT NULL,
+  book_title TEXT NOT NULL,
+  book_cover TEXT,
+  book_authors TEXT,
+  comment TEXT DEFAULT '',
+  read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 4. RLS read_books — owner-only (pattern watched_movies)
+ALTER TABLE read_books ENABLE ROW LEVEL SECURITY;
+CREATE POLICY IF NOT EXISTS "read_books_select" ON read_books FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY IF NOT EXISTS "read_books_insert" ON read_books FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY IF NOT EXISTS "read_books_update" ON read_books FOR UPDATE TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY IF NOT EXISTS "read_books_delete" ON read_books FOR DELETE TO authenticated USING (auth.uid() = user_id);
+
+-- 5. RLS book_suggestions — sender + recipient (pattern movie_suggestions)
+ALTER TABLE book_suggestions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY IF NOT EXISTS "book_suggestions_select" ON book_suggestions FOR SELECT TO authenticated
+  USING (auth.uid() = from_user_id OR auth.uid() = to_user_id);
+CREATE POLICY IF NOT EXISTS "book_suggestions_insert" ON book_suggestions FOR INSERT TO authenticated
+  WITH CHECK (auth.uid() = from_user_id);
+CREATE POLICY IF NOT EXISTS "book_suggestions_update" ON book_suggestions FOR UPDATE TO authenticated
+  USING (auth.uid() = to_user_id);
