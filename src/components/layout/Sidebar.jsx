@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Film, BookOpen, Map, Bell, User, LogOut } from 'lucide-react'
+import { Film, BookOpen, Utensils, Map, Bell, User, LogOut } from 'lucide-react'
 import { signOut } from '../../lib/supabase.js'
 import { useAuth } from '../../hooks/useAuth.jsx'
 
@@ -10,7 +10,8 @@ export default function Sidebar({ unreadCount = 0 }) {
 
   const navItems = [
     { icon: Film, label: 'Cinema', path: '/cinema' },
-    { icon: BookOpen, label: 'Libri', path: '/books', soon: true },
+    { icon: BookOpen, label: 'Libri', path: '/books' },
+    { icon: Utensils, label: 'Ristoranti', path: '/ristoranti' },
     { icon: Map, label: 'Viaggi', path: '/travel', soon: true },
   ]
 
@@ -34,16 +35,7 @@ export default function Sidebar({ unreadCount = 0 }) {
         {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
         <span className="nav-tooltip">Notifiche</span>
       </button>
-      <button className={`nav-item ${pathname === '/profile' ? 'active' : ''}`} onClick={() => navigate('/profile')}>
-        {user?.user_metadata?.avatar_url
-          ? <img src={user.user_metadata.avatar_url} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
-          : <User size={20} />}
-        <span className="nav-tooltip">Profilo</span>
-      </button>
-      <button className="nav-item" onClick={signOut} title="Esci">
-        <LogOut size={18} />
-        <span className="nav-tooltip">Esci</span>
-      </button>
+
     </nav>
   )
 }
