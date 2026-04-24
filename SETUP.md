@@ -1,3 +1,5 @@
+> ⚠️ Mai committare chiavi reali. Usa `.env.local` (già gitignored). Se devi ruotare le chiavi: vedi `.planning/PROJECT.md` § Key Decisions per il piano v2.
+
 # 🎬 Cinematica — Guida di Setup Completa
 
 Segui questi passaggi nell'ordine. Ci vogliono circa **20-30 minuti** la prima volta.
@@ -22,8 +24,8 @@ Segui questi passaggi nell'ordine. Ci vogliono circa **20-30 minuti** la prima v
    - Region: **West EU (Ireland)**
 3. Aspetta 1-2 minuti che il progetto si avvii
 4. Vai su **Settings → API** e copia:
-   - `Project URL` → es. `https://abcdef.supabase.co` --> https://YOUR_SUPABASE_URL.supabase.co
-   - `anon public` key (quella lunga sotto "Project API keys") --> YOUR_SUPABASE_ANON_KEY
+   - `Project URL` → es. `https://abcdef.supabase.co`
+   - `anon public` key (quella lunga sotto "Project API keys")
 
 ### Crea le tabelle:
 5. Nel menu a sinistra clicca **SQL Editor**
@@ -49,7 +51,7 @@ SECRET: YOUR_GOOGLE_OAUTH_CLIENT_SECRET
 2. Crea un account gratuito
 3. Vai su **Settings → API → Create** → scegli "Developer"
 4. Compila il form (puoi mettere "uso personale")
-5. Copia la **API Key (v3 auth)** — una stringa di 32 caratteri --> YOUR_TMDB_API_KEY
+5. Copia la **API Key (v3 auth)** — una stringa di 32 caratteri
 
 ---
 
@@ -58,7 +60,7 @@ SECRET: YOUR_GOOGLE_OAUTH_CLIENT_SECRET
 1. Vai su **https://aistudio.google.com/app/apikey**
 2. Accedi con il tuo account Google
 3. Clicca **"Create API Key"**
-4. Copia la chiave (inizia con `AIzaSy...`) --> YOUR_GEMINI_API_KEY
+4. Copia la chiave (inizia con `AIzaSy...`)
 
 > ℹ️ Il piano gratuito di Gemini permette 15 richieste/minuto e 1.500/giorno — più che sufficiente per uso personale!
 
@@ -70,10 +72,11 @@ SECRET: YOUR_GOOGLE_OAUTH_CLIENT_SECRET
 2. Aprilo con qualsiasi editor di testo e compila:
 
 ```
-VITE_SUPABASE_URL=https://tuocodice.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGci...
-VITE_TMDB_API_KEY=il_tuo_tmdb_key
-VITE_GEMINI_API_KEY=AIzaSy...
+VITE_SUPABASE_URL=YOUR_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+VITE_TMDB_API_KEY=YOUR_TMDB_API_KEY
+VITE_GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+VITE_GROQ_API_KEY=YOUR_GROQ_API_KEY
 ```
 
 ---
@@ -96,7 +99,7 @@ Vai su **http://localhost:5173** — dovresti vedere Cinematica! 🎉
 1. Vai su **https://vercel.com** → crea account gratuito (con GitHub)
 2. Se non hai GitHub: crea account su **https://github.com** → crea un nuovo repo vuoto → carica i file del progetto
 3. Su Vercel clicca **"Add New Project"** → importa il repo da GitHub
-4. Prima di fare Deploy, clicca **"Environment Variables"** e aggiungi le 4 variabili del tuo `.env.local`
+4. Prima di fare Deploy, clicca **"Environment Variables"** e aggiungi le 5 variabili del tuo `.env.local`
 5. Clicca **Deploy** e aspetta ~2 minuti
 6. Copia l'URL del sito (es. `cinematica-tuo-nome.vercel.app`)
 7. Torna su Supabase → **Authentication → URL Configuration** → aggiungi quell'URL nelle Redirect URLs
