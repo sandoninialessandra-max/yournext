@@ -66,12 +66,10 @@ Requirement coperti da codice esistente. Diventano la baseline di partenza — n
 
 ### Fase Security & Cleanup (priorità massima: blocca tutto il resto)
 
-- [ ] **SEC-01** Tutte le chiavi leakate nel `primo commit` sono ruotate — Supabase anon JWT, Google OAuth Client Secret, TMDB API key, Gemini API key, Groq API key
 - [ ] **SEC-02** `SETUP.md` contiene solo placeholder (mai valori reali) con warning esplicito "non committare chiavi vere"
 - [ ] **SEC-03** Il repo ha un `.gitignore` tracciato che copre almeno: `.env`, `.env*.local`, `node_modules/`, `.vercel/`, `dist/`, `.DS_Store`, `*.log`
 - [ ] **SEC-04** `node_modules/` non è più tracciato in git (git rm -r --cached applicato e committato)
 - [ ] **SEC-05** `.env.local` non è più tracciato in git
-- [ ] **SEC-06** Decisione esplicita documentata su git history rewrite (BFG / filter-repo) vs accettazione del rischio; se rewrite, esecuzione completata
 - [ ] **CLEAN-01** `supabase_schema.sql` contiene DDL + RLS per `read_books`, `book_suggestions`, e la colonna `watched_movies.status`, allineato al DB di produzione
 - [ ] **CLEAN-02** I file attualmente untracked (`src/components/books/`, `src/lib/googlebooks.js`, `favicon.svg`, `ANALISI_PROGETTO.md`) sono committati nel repo
 - [ ] **CLEAN-03** Un `git clone` pulito seguito da `npm install && npm run dev` parte senza errori di import / build
@@ -107,6 +105,8 @@ Requirement coperti da codice esistente. Diventano la baseline di partenza — n
 | Audit a11y e fix aria / keyboard nav | Gap noto ma utenti sono amici senza esigenze specifiche. Fix mirato se/quando emerge bisogno. |
 | Proxy serverless per chiavi LLM | Trade-off accettato — gruppo privato; monitoriamo il consumo. |
 | Adapter camelCase per output Supabase | Le leggere inconsistenze in `db.js` return shapes restano; ripulibili in un refactor v2. |
+| Rotazione chiavi leakate (Supabase anon / Google OAuth secret / TMDB / Gemini / Groq) — **SEC-01** deferred | Accept-risk: repo privato invite-only per ~5-10 amici, blast radius basso (RLS scopes Supabase anon; Google OAuth secret solo redirect flow via Supabase; TMDB/Gemini/Groq solo quote free-tier). Trigger di riapertura: **prima di qualsiasi condivisione pubblica del repo o scale-up oltre il gruppo privato attuale**. |
+| Git history rewrite (BFG / git-filter-repo) — **SEC-06** deferred | Accept-risk: pairing logico con SEC-01. Senza rotazione chiavi, la rewrite è cosmetica (chiavi valide + cloni esistenti). Riapertura insieme a SEC-01. |
 
 ---
 
@@ -116,12 +116,12 @@ Mappatura REQ-ID → fase del `ROADMAP.md` (popolata il 2026-04-22 alla creazion
 
 | REQ-ID | Fase | Note |
 |---|---|---|
-| SEC-01 | Phase 1 — Security & Cleanup | Rotazione chiavi (Supabase / Google OAuth / TMDB / Gemini / Groq) |
+| SEC-01 | v2 / Out of Scope | Deferred 2026-04-23 — accept-risk, pair con SEC-06 |
 | SEC-02 | Phase 1 — Security & Cleanup | Scrub `SETUP.md` con placeholder + warning |
 | SEC-03 | Phase 1 — Security & Cleanup | `.gitignore` tracciato e completo |
 | SEC-04 | Phase 1 — Security & Cleanup | `git rm -r --cached node_modules` |
 | SEC-05 | Phase 1 — Security & Cleanup | `git rm --cached .env.local` |
-| SEC-06 | Phase 1 — Security & Cleanup | Decisione esplicita rewrite history vs accept risk |
+| SEC-06 | v2 / Out of Scope | Deferred 2026-04-23 — accept-risk, pair con SEC-01 |
 | CLEAN-01 | Phase 1 — Security & Cleanup | DDL + RLS per `read_books`, `book_suggestions`, `watched_movies.status` |
 | CLEAN-02 | Phase 1 — Security & Cleanup | Commit dei file untracked (books feature, favicon, ANALISI_PROGETTO) |
 | CLEAN-03 | Phase 1 — Security & Cleanup | Clone pulito buildabile end-to-end |
@@ -137,4 +137,4 @@ Mappatura REQ-ID → fase del `ROADMAP.md` (popolata il 2026-04-22 alla creazion
 | QUAL-01 | Phase 3 — Quality Baseline | React error boundary attorno ad `AppShell` |
 | QUAL-02 | Phase 3 — Quality Baseline | `res.ok` + error surfacing nei tre lib esterni |
 
-**Coverage:** 20 / 20 Active REQ-ID mappati — nessun orfano, nessun duplicato.
+**Coverage:** 18 / 18 Active REQ-ID mappati — nessun orfano, nessun duplicato. (SEC-01 e SEC-06 spostati a v2 / Out of Scope il 2026-04-23, vedi PROJECT.md §Key Decisions.)

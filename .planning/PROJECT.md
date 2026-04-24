@@ -143,6 +143,8 @@ Per il dettaglio completo vedere `.planning/codebase/` (7 documenti).
 | **Security hardening prima di Ristoranti** | Chiavi esposte in git history sono rischio concreto anche con repo privato; meglio pulire prima di aggiungere una terza API key | ⏳ Pending (Fase 1) |
 | **Viaggi fuori v1** | v1 dichiarata = film+libri+ristoranti; viaggi duplicherebbe lavoro senza priorità | ⏳ Pending |
 | Schema DB come source of truth in `supabase_schema.sql` | Evita il drift che si è già creato per `read_books` / `book_suggestions` | ⏳ Pending (CLEAN-01) |
+| **SEC-01 rotazione chiavi → v2 (accept-risk)** | Repo privato invite-only, blast radius basso (RLS limita Supabase anon; Google OAuth secret solo redirect flow; LLM/TMDB solo free-tier quotas). Trigger di riapertura: prima di qualsiasi condivisione pubblica del repo o scale-up oltre il gruppo attuale. | ⏳ Deferred 2026-04-23 (Fase 1 planning) |
+| **SEC-06 history rewrite → v2 (accept-risk)** | Pair logico con SEC-01: senza rotazione, la rewrite è cosmetica. Riapertura insieme a SEC-01. | ⏳ Deferred 2026-04-23 (Fase 1 planning) |
 
 ## Constraints
 

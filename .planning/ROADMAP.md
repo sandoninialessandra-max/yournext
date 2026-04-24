@@ -21,11 +21,11 @@ Decimal phases appear between their surrounding integers in numeric order.
 ### Phase 1: Security & Cleanup
 **Goal**: Il repo è safe da clonare e da pubblicare: nessuna chiave valida leakata, `.gitignore` effettivo, `supabase_schema.sql` allineato al DB di produzione, working tree coerente.
 **Depends on**: Nothing (first phase)
-**Requirements**: SEC-01, SEC-02, SEC-03, SEC-04, SEC-05, SEC-06, CLEAN-01, CLEAN-02, CLEAN-03
+**Requirements**: SEC-02, SEC-03, SEC-04, SEC-05, CLEAN-01, CLEAN-02, CLEAN-03 *(SEC-01 e SEC-06 spostati a v2 il 2026-04-23 — accept-risk, vedi PROJECT.md §Key Decisions)*
 **Success Criteria** (what must be TRUE):
-  1. Tutte le chiavi che comparivano in `primo commit` (Supabase anon JWT, Google OAuth Client Secret, TMDB, Gemini, Groq) sono ruotate e quelle vecchie non autenticano più contro i rispettivi servizi.
+  1. La decisione di accept-risk sulla rotazione chiavi (SEC-01) è documentata in `PROJECT.md` §Key Decisions con trigger di riapertura esplicito (pre-condivisione pubblica del repo).
   2. `SETUP.md` contiene solo placeholder e un warning esplicito "non committare chiavi vere"; `.env.local` e `node_modules/` non sono più tracciati; `.gitignore` è tracciato e copre `.env*`, `node_modules/`, `dist/`, `.vercel/`, `.DS_Store`, `*.log`.
-  3. Esiste una decisione documentata (in PROJECT.md Key Decisions o in un commento dedicato) su rewrite della git history vs accettazione del rischio; se la decisione è "rewrite", l'operazione è stata eseguita e verificata.
+  3. La decisione di accept-risk sul rewrite della git history (SEC-06) è documentata in `PROJECT.md` §Key Decisions, paired con SEC-01 (stesso trigger di riapertura).
   4. `supabase_schema.sql` contiene DDL + RLS per `read_books`, `book_suggestions` e la colonna `watched_movies.status`, ed eseguendolo su un DB vuoto si ottiene lo stesso schema del DB di produzione.
   5. Un clone pulito su una macchina senza `.env.local` (ma con le env vars popolate) esegue `npm install && npm run dev` senza errori di import o build, e il routing `/cinema` e `/books` carica senza runtime error.
 **Plans**: 1 plan
