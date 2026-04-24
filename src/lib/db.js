@@ -96,5 +96,112 @@ async getSuggestions(userId) {
 
   async upsertProfile(userId, profile) {
     return supabase.from('profiles').upsert({ id: userId, ...profile })
-  }
+  },
+
+  // ── RISTORANTI ────────────────────────────────────────
+
+  async getVisitedRestaurants(userId) {
+    const { data } = await supabase
+      .from('visited_restaurants')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+    return data || []
+  },
+
+  async addVisitedRestaurant(userId, place, status = 'visited') {
+    const { data, error } = await supabase
+      .from('visited_restaurants')
+      .upsert({
+        user_id: userId,
+        restaurant_id: place.id,
+        restaurant_name: place.name,
+        restaurant_cover: place.cover,
+        restaurant_address: place.address,
+        restaurant_city: place.city,
+        restaurant_cuisine: place.cuisine,
+        restaurant_price_level: place.priceLevel,
+        status,
+        is_favorite: false,
+        labels: [],
+        created_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,restaurant_id' })
+    return { data, error }
+  },
+
+  async addToRestaurantWishlist(userId, place) {
+    return this.addVisitedRestaurant(userId, place, 'wishlist')
+  },
+
+  async updateRestaurantStatus(userId, restaurantId, status) {
+    return supabase.from('visited_restaurants').update({ status }).eq('user_id', userId).eq('restaurant_id', restaurantId)
+  },
+
+  async updateRestaurantRating(userId, restaurantId, rating) {
+    return supabase.from('visited_restaurants').update({ rating }).eq('user_id', userId).eq('restaurant_id', restaurantId)
+  },
+
+  async toggleRestaurantFavorite(userId, restaurantId, current) {
+    return supabase.from('visited_restaurants').update({ is_favorite: !current }).eq('user_id', userId).eq('restaurant_id', restaurantId)
+  },
+
+  async updateRestaurantNotes(userId, restaurantId, notes) {
+    return supabase.from('visited_restaurants').update({ notes }).eq('user_id', userId).eq('restaurant_id', restaurantId)
+  },
+
+  async updateRestaurantLabels(userId, restaurantId, labels) {
+    return supabase.from('visited_restaurants').update({ labels }).eq('user_id', userId).eq('restaurant_id', restaurantId)
+  },
+
+  async removeRestaurant(userId, restaurantId) {
+    return supabase.from('visited_restaurants').delete().eq('user_id', userId).eq('restaurant_id', restaurantId)
+  },
+
+  async sendRestaurantSuggestion(fromUserId, toUserId, place, comment = '') {
+    return supabase.from('restaurant_suggestions').insert({
+      from_user_id: fromUserId,
+      to_user_id: toUserId,
+      restaurant_id: place.id,
+      restaurant_name: place.name,
+      restaurant_cover: place.cover,
+      restaurant_city: place.city,
+      restaurant_cuisine: place.cuisine,
+      comment,
+      read: false,
+      created_at: new Date().toISOString(),
+    })
+  },
+
+  async getRestaurantSuggestions(userId) {
+    const { data } = await supabase
+      .from('restaurant_suggestions')
+      .select('*, profiles!restaurant_suggestions_from_user_id_fkey(full_name, avatar_url)')
+      .eq('to_user_id', userId)
+      .order('created_at', { ascending: false })
+    return data || []
+  },
+
+  async markRestaurantSuggestionRead(id) {
+    return supabase.from('restaurant_suggestions').update({ read: true }).eq('id', id)
+  },
+
+  async getUserCities(userId) {
+    const { data } = await supabase
+      .from('user_cities')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: true })
+    return data || []
+  },
+
+  async addUserCity(userId, cityName) {
+    const { data, error } = await supabase
+      .from('user_cities')
+      .upsert({ user_id: userId, city_name: cityName, created_at: new Date().toISOString() }, { onConflict: 'user_id,city_name' })
+    return { data, error }
+  },
+
+  async removeUserCity(userId, cityName) {
+    return supabase.from('user_cities').delete().eq('user_id', userId).eq('city_name', cityName)
+  },
 }
