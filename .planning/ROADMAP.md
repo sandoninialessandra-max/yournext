@@ -35,7 +35,7 @@ Plans:
 ### Phase 2: Verticale Ristoranti
 **Goal**: L'utente ha una terza verticale "Ristoranti" funzionalmente paritaria a Cinema e Libri: ricerca Foursquare, tracking personale, consigli AI, invio a un amico con commento, integrazione in sidebar e notifiche.
 **Depends on**: Phase 1
-**Requirements**: RIST-01, RIST-02, RIST-03, RIST-04, RIST-05, RIST-06, RIST-07, RIST-08, RIST-09
+**Requirements**: RIST-01, RIST-02, RIST-03, RIST-04, RIST-05, RIST-06, RIST-07, RIST-08, RIST-09, RIST-10
 **Success Criteria** (what must be TRUE):
   1. L'utente può navigare a `/ristoranti` dalla sidebar, cercare un ristorante via Foursquare e vedere risultati con foto, fascia prezzo, indirizzo, categoria e rating.
   2. L'utente può marcare un ristorante come visited o wishlist, dare rating 1-5, marcarlo favorite, e la persistenza è garantita da RLS per-utente su `visited_restaurants`.
