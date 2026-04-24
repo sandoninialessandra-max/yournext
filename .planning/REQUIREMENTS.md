@@ -76,7 +76,7 @@ Requirement coperti da codice esistente. Diventano la baseline di partenza — n
 
 ### Fase Ristoranti — terza verticale
 
-- [ ] **RIST-01** `src/lib/foursquare.js` espone metodi `search`, `getPlace`, `getTrending` contro Foursquare Places API v3 (pattern identico a `tmdb.js` / `googlebooks.js`)
+- [ ] **RIST-01** `src/lib/placesProvider.js` (dispatcher provider-agnostic) + `src/lib/foursquare.js` (implementazione concreta) espongono metodi `search`, `getPlace`, `getPopular`, `coverUrl` contro Foursquare Places API v3. Provider attivo selezionato via `VITE_PLACES_PROVIDER` (default `foursquare`; `google` predisposto ma non implementato)
 - [ ] **RIST-02** Esistono tabelle `visited_restaurants` (per-utente, stato visited/wishlist, rating, favorite, commento personale) e relativa RLS in `supabase_schema.sql`
 - [ ] **RIST-03** Esiste tabella `restaurant_suggestions` (from_user_id / to_user_id / dettagli place / commento / read) e relativa RLS
 - [ ] **RIST-04** L'utente vede una pagina `/ristoranti` con tabs "I miei ristoranti" / "Scopri" / "Consigli AI", coerente con `CinemaPage` e `BooksPage`
@@ -85,6 +85,7 @@ Requirement coperti da codice esistente. Diventano la baseline di partenza — n
 - [ ] **RIST-07** `NotificationsPage` e il badge unread mostrano anche `restaurant_suggestions`, ordinati per `created_at` insieme a film e libri
 - [ ] **RIST-08** Il sidebar mostra la voce "Ristoranti" con icona `lucide-react` e route `/ristoranti` in `src/App.jsx`
 - [ ] **RIST-09** `.env.example` e `.env.local` documentano `VITE_FOURSQUARE_API_KEY`
+- [ ] **RIST-10** L'utente può gestire una lista illimitata di città preferite (aggiunta inline con input + tasto +, rimozione con ×), riutilizzate come filtro in "I miei ristoranti" e come selettore in "Scopri" — tabella `user_cities` in `supabase_schema.sql`
 
 ### Fase Quality Baseline — minimo di robustezza
 
@@ -134,7 +135,8 @@ Mappatura REQ-ID → fase del `ROADMAP.md` (popolata il 2026-04-22 alla creazion
 | RIST-07 | Phase 2 — Verticale Ristoranti | `NotificationsPage` + badge unread estesi |
 | RIST-08 | Phase 2 — Verticale Ristoranti | Voce sidebar + route `/ristoranti` |
 | RIST-09 | Phase 2 — Verticale Ristoranti | `.env.example` + `.env.local` con `VITE_FOURSQUARE_API_KEY` |
+| RIST-10 | Phase 2 — Verticale Ristoranti | Tabella `user_cities` + RLS + UI selettore città |
 | QUAL-01 | Phase 3 — Quality Baseline | React error boundary attorno ad `AppShell` |
 | QUAL-02 | Phase 3 — Quality Baseline | `res.ok` + error surfacing nei tre lib esterni |
 
-**Coverage:** 18 / 18 Active REQ-ID mappati — nessun orfano, nessun duplicato. (SEC-01 e SEC-06 spostati a v2 / Out of Scope il 2026-04-23, vedi PROJECT.md §Key Decisions.)
+**Coverage:** 19 / 19 Active REQ-ID mappati — nessun orfano, nessun duplicato. (SEC-01 e SEC-06 spostati a v2 / Out of Scope il 2026-04-23, vedi PROJECT.md §Key Decisions; RIST-10 aggiunto il 2026-04-24 per gestione città preferite.)
