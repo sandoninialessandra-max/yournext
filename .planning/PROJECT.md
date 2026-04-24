@@ -139,7 +139,7 @@ Per il dettaglio completo vedere `.planning/codebase/` (7 documenti).
 | Stile identificatori misto (en per il codice, it per i testi utente) | Convenzione già affermata nel codebase | ✓ Validated |
 | Nessun global store (niente Redux / Zustand / React Query) | State leggero per-page; ok per la scala corrente | ✓ Validated |
 | Single global stylesheet `main.css` con CSS custom properties | Già in uso, semplice, niente build step extra | ✓ Validated |
-| **Foursquare Places** per Ristoranti (non Google Places / OSM / manuale) | Tier gratuito più generoso, dati Italia buoni, pattern REST identico a TMDB/GoogleBooks | ⏳ Pending (RIST-01) |
+| **Places layer astratto** per Ristoranti: Foursquare attivo, Google predisposto (non implementato in v1) | Dispatcher `placesProvider.js` + implementazione `foursquare.js`; tier gratuito Foursquare generoso, dati Italia buoni; Google resta behind `VITE_PLACES_PROVIDER=google` per v2 | ⏳ Pending (RIST-01) |
 | **Security hardening prima di Ristoranti** | Chiavi esposte in git history sono rischio concreto anche con repo privato; meglio pulire prima di aggiungere una terza API key | ⏳ Pending (Fase 1) |
 | **Viaggi fuori v1** | v1 dichiarata = film+libri+ristoranti; viaggi duplicherebbe lavoro senza priorità | ⏳ Pending |
 | Schema DB come source of truth in `supabase_schema.sql` | Evita il drift che si è già creato per `read_books` / `book_suggestions` | ⏳ Pending (CLEAN-01) |
