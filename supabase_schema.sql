@@ -149,17 +149,26 @@ CREATE TABLE IF NOT EXISTS book_suggestions (
 );
 
 -- 4. RLS read_books — owner-only (pattern watched_movies)
+-- Note: Postgres does NOT support `CREATE POLICY IF NOT EXISTS` (all versions).
+-- Use `DROP POLICY IF EXISTS ... ; CREATE POLICY ...;` for idempotency.
 ALTER TABLE read_books ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "read_books_select" ON read_books FOR SELECT TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY IF NOT EXISTS "read_books_insert" ON read_books FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
-CREATE POLICY IF NOT EXISTS "read_books_update" ON read_books FOR UPDATE TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY IF NOT EXISTS "read_books_delete" ON read_books FOR DELETE TO authenticated USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "read_books_select" ON read_books;
+CREATE POLICY "read_books_select" ON read_books FOR SELECT TO authenticated USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "read_books_insert" ON read_books;
+CREATE POLICY "read_books_insert" ON read_books FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "read_books_update" ON read_books;
+CREATE POLICY "read_books_update" ON read_books FOR UPDATE TO authenticated USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "read_books_delete" ON read_books;
+CREATE POLICY "read_books_delete" ON read_books FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
 -- 5. RLS book_suggestions — sender + recipient (pattern movie_suggestions)
 ALTER TABLE book_suggestions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "book_suggestions_select" ON book_suggestions FOR SELECT TO authenticated
+DROP POLICY IF EXISTS "book_suggestions_select" ON book_suggestions;
+CREATE POLICY "book_suggestions_select" ON book_suggestions FOR SELECT TO authenticated
   USING (auth.uid() = from_user_id OR auth.uid() = to_user_id);
-CREATE POLICY IF NOT EXISTS "book_suggestions_insert" ON book_suggestions FOR INSERT TO authenticated
+DROP POLICY IF EXISTS "book_suggestions_insert" ON book_suggestions;
+CREATE POLICY "book_suggestions_insert" ON book_suggestions FOR INSERT TO authenticated
   WITH CHECK (auth.uid() = from_user_id);
-CREATE POLICY IF NOT EXISTS "book_suggestions_update" ON book_suggestions FOR UPDATE TO authenticated
+DROP POLICY IF EXISTS "book_suggestions_update" ON book_suggestions;
+CREATE POLICY "book_suggestions_update" ON book_suggestions FOR UPDATE TO authenticated
   USING (auth.uid() = to_user_id);
