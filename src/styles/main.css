@@ -281,6 +281,7 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
   color: var(--text3); border-bottom: 2px solid transparent;
   transition: all var(--transition); background: none; border-top: none;
   border-left: none; border-right: none;
+  white-space: nowrap;
 }
 .tab:hover { color: var(--text2); }
 .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
@@ -380,7 +381,8 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
 
 /* Mobile responsive */
 @media (max-width: 768px) {
-  .sidebar { width: 100%; height: 60px; flex-direction: row; top: auto; bottom: 0; left: 0; right: 0; padding: 0 8px; border-right: none; border-top: 1px solid var(--border); }
+  .sidebar { width: 100%; height: 60px; flex-direction: row; top: auto; bottom: 0; left: 0; right: 0; padding: 0 8px; border-right: none; border-top: 1px solid var(--border); justify-content: flex-start; }
+  .sidebar .nav-spacer { display: flex; flex: 1; }
   .main-content { margin-left: 0; margin-bottom: 60px; }
   .nav-logo { display: none; }
   .nav-spacer { display: none; }
@@ -388,7 +390,7 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
   .page-header { padding: 20px 16px 0; }
   .section { padding: 16px; }
   .tabs { padding: 0 16px; }
-  .movies-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+  .movies-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; }
   .login-left { display: none; }
   .login-right { width: 100%; }
 }
@@ -402,4 +404,91 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
   letter-spacing: 0.5px;
   background: var(--bg3); color: var(--text3);
   padding: 2px 5px; border-radius: 4px; margin-left: 4px;
+}
+
+/* ── Ristoranti (Phase 2) ── */
+
+.city-chips-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+  align-items: center;
+}
+
+.city-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bg3);
+  color: var(--text2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.city-chip:hover { background: var(--bg4); color: var(--text); }
+.city-chip.active {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.city-chip-remove {
+  background: none;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 2px;
+  line-height: 1;
+}
+.city-chip-remove:hover { color: var(--text); }
+
+.city-chip-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.city-chip-add input {
+  width: 120px;
+  padding: 4px 8px;
+  background: var(--bg3);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.label-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: var(--bg3);
+  color: var(--text2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.label-pill:hover { background: var(--bg4); color: var(--text); }
+.label-pill.label-pill-selected {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.price-level {
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
