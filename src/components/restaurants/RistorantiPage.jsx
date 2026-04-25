@@ -37,6 +37,7 @@ export default function RistorantiPage() {
   const [aiSuggestions, setAiSuggestions] = useState(null)
   const [loadingAi, setLoadingAi] = useState(false)
   const [filterFav, setFilterFav] = useState(false)
+  const [expandedFilters, setExpandedFilters] = useState(false)
 
   const loadRestaurants = useCallback(async () => {
     if (!user) return
@@ -231,22 +232,40 @@ export default function RistorantiPage() {
               </div>}
 
           {/* Label filter — hidden in search subtab */}
-          {subTab !== 'search' && (
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-              <span style={{ fontSize: 12, color: 'var(--text3)', alignSelf: 'center', marginRight: 4 }}>
-                <Tag size={12} style={{ verticalAlign: 'middle' }} /> Filtra:
-              </span>
-              {FIXED_LABELS.map(l => (
-                <button
-                  key={l}
-                  className={`label-pill ${selectedLabels.includes(l) ? 'label-pill-selected' : ''}`}
-                  onClick={() => handleToggleLabel(l)}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
-          )}
+          {subTab !== 'search' && (() => {
+            const usedLabels = new Set(visitedRestaurants.flatMap(r => r.labels || []))
+            const customUsed = [...usedLabels].filter(l => !FIXED_LABELS.includes(l))
+            const visibleLabels = expandedFilters
+              ? [...FIXED_LABELS, ...customUsed]
+              : [
+                  ...FIXED_LABELS.slice(0, 2),
+                  ...FIXED_LABELS.slice(2).filter(l => usedLabels.has(l)),
+                  ...customUsed,
+                ]
+            const hiddenCount = FIXED_LABELS.slice(2).filter(l => !usedLabels.has(l)).length
+            return (
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+                <span style={{ fontSize: 12, color: 'var(--text3)', alignSelf: 'center', marginRight: 4 }}>
+                  <Tag size={12} style={{ verticalAlign: 'middle' }} /> Filtra:
+                </span>
+                {visibleLabels.map(l => (
+                  <button
+                    key={l}
+                    className={`label-pill ${selectedLabels.includes(l) ? 'label-pill-selected' : ''}`}
+                    onClick={() => handleToggleLabel(l)}
+                  >
+                    {l}
+                  </button>
+                ))}
+                {!expandedFilters && hiddenCount > 0 && (
+                  <button className="label-pill" onClick={() => setExpandedFilters(true)}>+{hiddenCount}</button>
+                )}
+                {expandedFilters && hiddenCount > 0 && (
+                  <button className="label-pill" onClick={() => setExpandedFilters(false)}>−</button>
+                )}
+              </div>
+            )
+          })()}
 
           {/* Search — only in search subtab */}
           {subTab === 'search' && (
