@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Search, Heart, Sparkles, Plus, X, Bookmark, Tag } from 'lucide-react'
+import { Search, Heart, Sparkles, Plus, X, Bookmark, Tag, MapPin } from 'lucide-react'
 import { placesProvider } from '../../lib/placesProvider.js'
 import { db } from '../../lib/db.js'
 import { ai } from '../../lib/gemini.js'
@@ -311,6 +311,16 @@ export default function RistorantiPage() {
                       </div>
                       <div className="restaurant-row-aside">
                         {r.rating && <span>★ {r.rating}</span>}
+                        <a
+                          href={`https://maps.google.com/?q=${encodeURIComponent(`${r.restaurant_name} ${r.restaurant_address || ''} ${r.restaurant_city || ''}`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={e => e.stopPropagation()}
+                          title="Apri su Google Maps"
+                          style={{ display: 'flex', alignItems: 'center', color: 'var(--text3)', padding: 4, borderRadius: 4 }}
+                        >
+                          <MapPin size={14} />
+                        </a>
                       </div>
                     </div>
                   )

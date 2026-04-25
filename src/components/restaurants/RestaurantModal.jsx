@@ -138,27 +138,32 @@ export default function RestaurantModal({ restaurantId, onClose, visitedRestaura
       <div className="modal" onClick={e => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose}><X size={18} /></button>
 
-        {/* Header essenziale */}
-        <div style={{ marginBottom: 16 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 6, lineHeight: 1.3 }}>{place.name}</h2>
-          {place.cuisine && <p style={{ color: 'var(--text2)', fontSize: 13, marginBottom: 4 }}>{place.cuisine}</p>}
-          {(place.address || place.city) && (
-            <p style={{ color: 'var(--text3)', fontSize: 12 }}>
-              {place.address}{place.address && place.city ? ' · ' : ''}{place.city}
-            </p>
+        {/* Header — title block centrato */}
+        <div style={{ textAlign: 'center', marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+          <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8, lineHeight: 1.25 }}>{place.name}</h2>
+          {place.cuisine && (
+            <p style={{ color: 'var(--text2)', fontSize: 13, marginBottom: 10, fontStyle: 'italic' }}>{place.cuisine}</p>
           )}
+          {place.city && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 12px', background: 'var(--bg4)', borderRadius: 999, fontSize: 13, fontWeight: 500, marginBottom: 8 }}>
+              <MapPin size={12} /> {place.city}
+            </div>
+          )}
+          {place.address && (
+            <p style={{ color: 'var(--text3)', fontSize: 12, marginBottom: 10 }}>{place.address}</p>
+          )}
+          <div>
+            <a
+              href={place.mapsUrl || `https://maps.google.com/?q=${encodeURIComponent(`${place.name} ${place.address || ''} ${place.city || ''}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-secondary btn-sm"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            >
+              <MapPin size={12} /> Apri su Google Maps
+            </a>
+          </div>
         </div>
-
-        {/* Google Maps — CTA primario, full-width */}
-        <a
-          href={place.mapsUrl || `https://maps.google.com/?q=${encodeURIComponent(`${place.name} ${place.address || ''}`)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-primary"
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', marginBottom: 20, padding: '12px' }}
-        >
-          <MapPin size={16} /> Apri in Google Maps
-        </a>
 
         {/* Consigli ricevuti su questo locale */}
         {incomingSuggestions.length > 0 && (
