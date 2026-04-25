@@ -11,6 +11,23 @@ export const db = {
     return data || []
   },
 
+async addToWishlist(userId, movie) {
+  const { data, error } = await supabase
+    .from('watched_movies')
+    .upsert({
+      user_id: userId,
+      movie_id: movie.id,
+      movie_title: movie.title,
+      movie_poster: movie.poster_path,
+      movie_year: movie.release_date?.slice(0, 4),
+      movie_genres: movie.genres?.map(g => g.name) || movie.genre_ids || [],
+      status: 'wishlist',
+      is_favorite: false,
+      created_at: new Date().toISOString()
+    }, { onConflict: 'user_id,movie_id' })
+  return { data, error }
+},
+
   async addWatchedMovie(userId, movie, rating = null) {
     const { data, error } = await supabase
       .from('watched_movies')
@@ -45,13 +62,22 @@ export const db = {
   },
 
   // Friend suggestions
-  async getFriends(userId) {
-    const { data } = await supabase
-      .from('friendships')
-      .select('friend_id, profiles!friendships_friend_id_fkey(id, full_name, avatar_url, email)')
-      .eq('user_id', userId)
-    return data || []
-  },
+async getFriends(userId) {
+  const { data } = await supabase
+    .from('friendships')
+    .select('friend_id')
+    .eq('user_id', userId)
+  
+  if (!data?.length) return []
+  
+  const friendIds = data.map(f => f.friend_id)
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, full_name, avatar_url, email')
+    .in('id', friendIds)
+  
+  return (profiles || []).map(p => ({ friend_id: p.id, profiles: p }))
+},
 
   async sendSuggestion(fromUserId, toUserId, movie, comment = '') {
     return supabase.from('movie_suggestions').insert({
@@ -70,7 +96,7 @@ export const db = {
 async getSuggestions(userId) {
   const { data } = await supabase
     .from('movie_suggestions')
-    .select('*, profiles(full_name, avatar_url)')
+    .select('*, profiles!movie_suggestions_from_user_id_fkey(full_name, avatar_url)')
     .eq('to_user_id', userId)
     .order('created_at', { ascending: false })
   return data || []
@@ -80,14 +106,21 @@ async getSuggestions(userId) {
     return supabase.from('movie_suggestions').update({ read: true }).eq('id', id)
   },
 
-  async searchUserByEmail(email) {
-    const { data } = await supabase.from('profiles').select('*').ilike('email', `%${email}%`).limit(5)
-    return data || []
-  },
+	async searchUserByEmail(email) {
+	  const { data } = await supabase
+		.from('profiles')
+		.select('*')
+		.or(`email.ilike.%${email}%,full_name.ilike.%${email}%`)
+		.limit(5)
+	  return data || []
+	},
 
-  async addFriend(userId, friendId) {
-    return supabase.from('friendships').upsert({ user_id: userId, friend_id: friendId })
-  },
+	async addFriend(userId, friendId) {
+	  const { data, error } = await supabase
+		.from('friendships')
+		.upsert({ user_id: userId, friend_id: friendId }, { onConflict: 'user_id,friend_id' })
+	  return { data, error }
+	},
 
   async getProfile(userId) {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
@@ -96,6 +129,83 @@ async getSuggestions(userId) {
 
   async upsertProfile(userId, profile) {
     return supabase.from('profiles').upsert({ id: userId, ...profile })
+  },
+
+  // ── LIBRI ──────────────────────────────────────────────
+
+  async getReadBooks(userId) {
+    const { data } = await supabase
+      .from('read_books')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+    return data || []
+  },
+
+  async addReadBook(userId, book, status = 'read') {
+    const { data, error } = await supabase
+      .from('read_books')
+      .upsert({
+        user_id: userId,
+        book_id: book.id,
+        book_title: book.title,
+        book_cover: book.cover,
+        book_year: book.year,
+        book_authors: book.authors,
+        book_pages: book.pages,
+        status,
+        current_page: 0,
+        is_favorite: false,
+        created_at: new Date().toISOString()
+      }, { onConflict: 'user_id,book_id' })
+    return { data, error }
+  },
+
+  async removeReadBook(userId, bookId) {
+    return supabase.from('read_books').delete().eq('user_id', userId).eq('book_id', bookId)
+  },
+
+  async updateBookStatus(userId, bookId, status) {
+    return supabase.from('read_books').update({ status }).eq('user_id', userId).eq('book_id', bookId)
+  },
+
+  async updateBookProgress(userId, bookId, currentPage) {
+    return supabase.from('read_books').update({ current_page: currentPage }).eq('user_id', userId).eq('book_id', bookId)
+  },
+
+  async updateBookRating(userId, bookId, rating) {
+    return supabase.from('read_books').update({ rating }).eq('user_id', userId).eq('book_id', bookId)
+  },
+
+  async toggleBookFavorite(userId, bookId, current) {
+    return supabase.from('read_books').update({ is_favorite: !current }).eq('user_id', userId).eq('book_id', bookId)
+  },
+
+  async sendBookSuggestion(fromUserId, toUserId, book, comment = '') {
+    return supabase.from('book_suggestions').insert({
+      from_user_id: fromUserId,
+      to_user_id: toUserId,
+      book_id: book.id,
+      book_title: book.title,
+      book_cover: book.cover,
+      book_authors: book.authors,
+      comment,
+      read: false,
+      created_at: new Date().toISOString()
+    })
+  },
+
+  async getBookSuggestions(userId) {
+    const { data } = await supabase
+      .from('book_suggestions')
+      .select('*, profiles!book_suggestions_from_user_id_fkey(full_name, avatar_url)')
+      .eq('to_user_id', userId)
+      .order('created_at', { ascending: false })
+    return data || []
+  },
+
+  async markBookSuggestionRead(id) {
+    return supabase.from('book_suggestions').update({ read: true }).eq('id', id)
   },
 
   // ── RISTORANTI ────────────────────────────────────────
@@ -205,3 +315,4 @@ async getSuggestions(userId) {
     return supabase.from('user_cities').delete().eq('user_id', userId).eq('city_name', cityName)
   },
 }
+
