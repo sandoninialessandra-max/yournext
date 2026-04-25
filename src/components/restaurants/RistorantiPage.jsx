@@ -61,7 +61,7 @@ export default function RistorantiPage() {
   }, [tab, selectedCity, selectedCategory])
 
   useEffect(() => {
-    if (searchQuery.length < 2 || !selectedCity) {
+    if (searchQuery.length < 3 || !selectedCity) {
       setSearchResults([])
       setSearching(false)
       return
