@@ -301,6 +301,16 @@ async getSuggestions(userId) {
     return supabase.from('restaurant_suggestions').update({ read: true }).eq('id', id)
   },
 
+  async getRestaurantSuggestionsForPlace(userId, restaurantId) {
+    const { data } = await supabase
+      .from('restaurant_suggestions')
+      .select('*')
+      .eq('to_user_id', userId)
+      .eq('restaurant_id', restaurantId)
+      .order('created_at', { ascending: false })
+    return joinSenderProfiles(data || [])
+  },
+
   async getUserCities(userId) {
     const { data } = await supabase
       .from('user_cities')

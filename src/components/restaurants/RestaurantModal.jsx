@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import RestaurantPlaceholder from './RestaurantPlaceholder.jsx'
-import { X, Heart, Bookmark, Send, ChevronDown, ChevronUp, MapPin, Sparkles, Tag, Plus, Utensils } from 'lucide-react'
+import { X, Heart, Bookmark, Send, ChevronDown, ChevronUp, MapPin, Sparkles, Tag, Plus, Utensils, MessageCircle } from 'lucide-react'
 import { placesProvider } from '../../lib/placesProvider.js'
 import { db } from '../../lib/db.js'
 import { ai } from '../../lib/gemini.js'
@@ -9,7 +8,6 @@ import { useToast } from '../shared/Toast.jsx'
 import StarRating from '../shared/StarRating.jsx'
 
 const FIXED_LABELS = ['🍹 Aperitivo', '🍽️ Cena', '☀️ Pranzo', '💑 Romantico', '👥 Amici', '👨‍👩‍👧 Famiglia', '💼 Lavoro', '⭐ Speciale']
-const priceSymbol = (n) => n ? '€'.repeat(n) : '—'
 
 export default function RestaurantModal({ restaurantId, onClose, visitedRestaurants, onUpdate }) {
   const { user } = useAuth()
@@ -25,6 +23,7 @@ export default function RestaurantModal({ restaurantId, onClose, visitedRestaura
   const [selectedFriend, setSelectedFriend] = useState(null)
   const [notesDraft, setNotesDraft] = useState('')
   const [customLabelInput, setCustomLabelInput] = useState('')
+  const [incomingSuggestions, setIncomingSuggestions] = useState([])
 
   const entry = visitedRestaurants.find(r => r.restaurant_id === restaurantId)
   const isVisited = entry?.status === 'visited'
@@ -34,6 +33,7 @@ export default function RestaurantModal({ restaurantId, onClose, visitedRestaura
   useEffect(() => {
     placesProvider.getPlace(restaurantId).then(p => { setPlace(p); setLoading(false) })
     db.getFriends(user.id).then(setFriends)
+    db.getRestaurantSuggestionsForPlace(user.id, restaurantId).then(setIncomingSuggestions)
   }, [restaurantId, user.id])
 
   useEffect(() => {
@@ -138,37 +138,44 @@ export default function RestaurantModal({ restaurantId, onClose, visitedRestaura
       <div className="modal" onClick={e => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose}><X size={18} /></button>
 
-        {/* Hero */}
-        <div style={{ display: 'flex', gap: 20, marginBottom: 20 }}>
-          {place.cover
-            ? <img src={place.cover} alt={place.name} style={{ width: 100, height: 150, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
-            : <RestaurantPlaceholder cuisine={place.cuisine} size="modal" style={{ width: 100, height: 150, borderRadius: 8, flexShrink: 0 }} />}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 6, lineHeight: 1.3 }}>{place.name}</h2>
-            {place.cuisine && <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 4 }}>{place.cuisine}</p>}
-            {(place.address || place.city) && (
-              <p style={{ color: 'var(--text3)', fontSize: 12, marginBottom: 6 }}>
-                {place.address}{place.address && place.city ? ' · ' : ''}{place.city}
-              </p>
-            )}
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 12, color: 'var(--text3)', alignItems: 'center' }}>
-              <span className="price-level">{priceSymbol(place.priceLevel)}</span>
-              {place.rating && <span>★ {place.rating}/10</span>}
-            </div>
-          </div>
+        {/* Header essenziale */}
+        <div style={{ marginBottom: 16 }}>
+          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 6, lineHeight: 1.3 }}>{place.name}</h2>
+          {place.cuisine && <p style={{ color: 'var(--text2)', fontSize: 13, marginBottom: 4 }}>{place.cuisine}</p>}
+          {(place.address || place.city) && (
+            <p style={{ color: 'var(--text3)', fontSize: 12 }}>
+              {place.address}{place.address && place.city ? ' · ' : ''}{place.city}
+            </p>
+          )}
         </div>
 
-        {/* Google Maps */}
-        <div style={{ marginBottom: 16 }}>
-          <a
-            href={place.mapsUrl || `https://maps.google.com/?q=${encodeURIComponent(`${place.name} ${place.address || ''}`)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-secondary btn-sm"
-          >
-            <MapPin size={13} /> Apri in Google Maps
-          </a>
-        </div>
+        {/* Google Maps — CTA primario, full-width */}
+        <a
+          href={place.mapsUrl || `https://maps.google.com/?q=${encodeURIComponent(`${place.name} ${place.address || ''}`)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn btn-primary"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', marginBottom: 20, padding: '12px' }}
+        >
+          <MapPin size={16} /> Apri in Google Maps
+        </a>
+
+        {/* Consigli ricevuti su questo locale */}
+        {incomingSuggestions.length > 0 && (
+          <div style={{ marginBottom: 20, background: 'var(--bg3)', borderRadius: 'var(--radius-sm)', padding: 12 }}>
+            <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <MessageCircle size={12} /> {incomingSuggestions.length === 1 ? 'Consiglio ricevuto' : `${incomingSuggestions.length} consigli ricevuti`}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {incomingSuggestions.map(s => (
+                <div key={s.id} style={{ fontSize: 13 }}>
+                  <strong>{s.profiles?.full_name || 'Un amico'}</strong>
+                  {s.comment && <span style={{ color: 'var(--text2)' }}>: «{s.comment}»</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Rating */}
         {inLibrary && (
