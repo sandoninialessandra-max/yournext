@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Search, Heart, Sparkles, Plus, X, Bookmark, Tag, MapPin } from 'lucide-react'
 import { placesProvider } from '../../lib/placesProvider.js'
 import { db } from '../../lib/db.js'
@@ -30,7 +31,9 @@ export default function RistorantiPage() {
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [popular, setPopular] = useState([])
   const [loadingPopular, setLoadingPopular] = useState(false)
-  const [selectedRestaurantId, setSelectedRestaurantId] = useState(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const selectedRestaurantId = searchParams.get('r') || null
+  const setSelectedRestaurantId = (id) => setSearchParams(id ? { r: id } : {})
   const [aiSuggestions, setAiSuggestions] = useState(null)
   const [loadingAi, setLoadingAi] = useState(false)
 
