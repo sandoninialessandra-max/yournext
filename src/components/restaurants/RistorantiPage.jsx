@@ -11,7 +11,7 @@ import RestaurantPlaceholder from './RestaurantPlaceholder.jsx'
 
 const TABS = ['I miei ristoranti', 'Scopri', 'Consigli AI']
 const CATEGORIES = ['Aperitivo', 'Cena', 'Romantico', 'Pizza', 'Italiano', 'Giapponese', 'Cinese', 'Hamburger']
-const FIXED_LABELS = ["All'aperto", 'Particolare', 'Vista', 'Cena', 'Aperitivo', 'Pranzo', 'Pub']
+const FIXED_LABELS = ["🌳 All'aperto", '💎 Particolare', '🌅 Vista', '🍽️ Cena', '🍹 Aperitivo', '☀️ Pranzo', '🍺 Pub']
 const priceSymbol = (n) => n ? '€'.repeat(n) : '—'
 
 export default function RistorantiPage() {
@@ -310,8 +310,7 @@ export default function RistorantiPage() {
               </div>
             : <div className="restaurants-list">
                 {displayed.map(r => {
-                  const meta = [r.restaurant_cuisine, r.restaurant_city, priceSymbol(r.restaurant_price_level)].filter(Boolean).join(' · ')
-                  const labelsPreview = (r.labels || []).slice(0, 2).join(' ')
+                  const customLabels = (r.labels || []).filter(l => !FIXED_LABELS.includes(l))
                   return (
                     <div key={r.restaurant_id} className="restaurant-row" onClick={() => setSelectedRestaurantId(r.restaurant_id)}>
                       {r.restaurant_cover
@@ -323,10 +322,9 @@ export default function RistorantiPage() {
                           {r.is_favorite && <span style={{ fontSize: 12 }}>❤️</span>}
                           {r.status === 'wishlist' && <Bookmark size={12} />}
                         </div>
-                        <div className="restaurant-row-meta">
-                          {meta}{labelsPreview && ` · ${labelsPreview}`}
-                          {r.notes && ` · ${r.notes.slice(0, 30)}${r.notes.length > 30 ? '…' : ''}`}
-                        </div>
+                        {customLabels.length > 0 && (
+                          <div className="restaurant-row-meta">{customLabels.slice(0, 3).join(' · ')}</div>
+                        )}
                       </div>
                       <div className="restaurant-row-aside">
                         {r.rating && (

@@ -7,7 +7,7 @@ import { useAuth } from '../../hooks/useAuth.jsx'
 import { useToast } from '../shared/Toast.jsx'
 import StarRating from '../shared/StarRating.jsx'
 
-const FIXED_LABELS = ["All'aperto", 'Particolare', 'Vista', 'Cena', 'Aperitivo', 'Pranzo', 'Pub']
+const FIXED_LABELS = ["🌳 All'aperto", '💎 Particolare', '🌅 Vista', '🍽️ Cena', '🍹 Aperitivo', '☀️ Pranzo', '🍺 Pub']
 
 export default function RestaurantModal({ restaurantId, onClose, visitedRestaurants, onUpdate }) {
   const { user } = useAuth()
