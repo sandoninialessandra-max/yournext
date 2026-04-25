@@ -289,37 +289,32 @@ export default function RistorantiPage() {
                 <h3>{subTab === 'wishlist' ? 'Nessun ristorante da provare' : 'Nessun ristorante ancora'}</h3>
                 <p>Vai al sub-tab <strong>🔍 Cerca</strong> per aggiungerne uno.</p>
               </div>
-            : <div className="movies-grid">
-                {displayed.map(r => (
-                  <div key={r.restaurant_id} className="movie-card" onClick={() => setSelectedRestaurantId(r.restaurant_id)}>
-                    {r.restaurant_cover
-                      ? <img className="movie-card-poster" src={r.restaurant_cover} alt={r.restaurant_name} loading="lazy" />
-                      : <RestaurantPlaceholder cuisine={r.restaurant_cuisine} className="movie-card-poster" />}
-                    {r.is_favorite && <div className="movie-card-fav">❤️</div>}
-                    {r.rating && <div className="movie-card-badge">★ {r.rating}</div>}
-                    {r.status === 'wishlist' && <div style={{ position: 'absolute', top: 8, right: 8, fontSize: 14 }}><Bookmark size={14} /></div>}
-                    <div className="movie-card-body">
-                      <div className="movie-card-title">{r.restaurant_name}</div>
-                      <div className="movie-card-year">{r.restaurant_cuisine}</div>
-                      <div style={{ fontSize: 11, marginTop: 2 }}>
-                        <span className="price-level">{priceSymbol(r.restaurant_price_level)}</span>
+            : <div className="restaurants-list">
+                {displayed.map(r => {
+                  const meta = [r.restaurant_cuisine, r.restaurant_city, priceSymbol(r.restaurant_price_level)].filter(Boolean).join(' · ')
+                  const labelsPreview = (r.labels || []).slice(0, 2).join(' ')
+                  return (
+                    <div key={r.restaurant_id} className="restaurant-row" onClick={() => setSelectedRestaurantId(r.restaurant_id)}>
+                      {r.restaurant_cover
+                        ? <img className="restaurant-row-thumb" src={r.restaurant_cover} alt={r.restaurant_name} style={{ objectFit: 'cover' }} loading="lazy" />
+                        : <RestaurantPlaceholder cuisine={r.restaurant_cuisine} size="searchRow" className="restaurant-row-thumb" />}
+                      <div className="restaurant-row-body">
+                        <div className="restaurant-row-name">
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.restaurant_name}</span>
+                          {r.is_favorite && <span style={{ fontSize: 12 }}>❤️</span>}
+                          {r.status === 'wishlist' && <Bookmark size={12} />}
+                        </div>
+                        <div className="restaurant-row-meta">
+                          {meta}{labelsPreview && ` · ${labelsPreview}`}
+                          {r.notes && ` · ${r.notes.slice(0, 30)}${r.notes.length > 30 ? '…' : ''}`}
+                        </div>
                       </div>
-                      {(r.labels || []).length > 0 && (
-                        <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginTop: 4 }}>
-                          {(r.labels || []).slice(0, 3).map((l, i) => (
-                            <span key={i} className="label-pill" style={{ fontSize: 10, padding: '2px 6px' }}>{l}</span>
-                          ))}
-                          {r.labels && r.labels.length > 3 && <span className="label-pill" style={{ fontSize: 10 }}>+{r.labels.length - 3}</span>}
-                        </div>
-                      )}
-                      {r.notes && (
-                        <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>
-                          {r.notes.slice(0, 40)}{r.notes.length > 40 ? '…' : ''}
-                        </div>
-                      )}
+                      <div className="restaurant-row-aside">
+                        {r.rating && <span>★ {r.rating}</span>}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
           )}
         </div>
