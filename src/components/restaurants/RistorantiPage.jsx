@@ -158,6 +158,9 @@ export default function RistorantiPage() {
             <button className={`btn btn-sm ${subTab === 'wishlist' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setSubTab('wishlist')}>
               🔖 Wishlist ({wishlist.length})
             </button>
+            <button className={`btn btn-sm ${subTab === 'search' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setSubTab('search')}>
+              🔍 Cerca
+            </button>
           </div>
 
           {/* City selector */}
@@ -207,23 +210,26 @@ export default function RistorantiPage() {
                 </div>
               </div>}
 
-          {/* Label filter */}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-            <span style={{ fontSize: 12, color: 'var(--text3)', alignSelf: 'center', marginRight: 4 }}>
-              <Tag size={12} style={{ verticalAlign: 'middle' }} /> Filtra:
-            </span>
-            {FIXED_LABELS.map(l => (
-              <button
-                key={l}
-                className={`label-pill ${selectedLabels.includes(l) ? 'label-pill-selected' : ''}`}
-                onClick={() => handleToggleLabel(l)}
-              >
-                {l}
-              </button>
-            ))}
-          </div>
+          {/* Label filter — hidden in search subtab */}
+          {subTab !== 'search' && (
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+              <span style={{ fontSize: 12, color: 'var(--text3)', alignSelf: 'center', marginRight: 4 }}>
+                <Tag size={12} style={{ verticalAlign: 'middle' }} /> Filtra:
+              </span>
+              {FIXED_LABELS.map(l => (
+                <button
+                  key={l}
+                  className={`label-pill ${selectedLabels.includes(l) ? 'label-pill-selected' : ''}`}
+                  onClick={() => handleToggleLabel(l)}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+          )}
 
-          {/* Search */}
+          {/* Search — only in search subtab */}
+          {subTab === 'search' && (
           <div style={{ marginBottom: 16 }}>
             <div className="search-bar">
               <Search size={16} className="search-bar-icon" />
@@ -233,13 +239,19 @@ export default function RistorantiPage() {
                 value={searchQuery}
                 onChange={e => handleSearch(e.target.value)}
                 disabled={!selectedCity}
+                autoFocus
               />
             </div>
-            {searchQuery.length >= 2 && (
+            {searchQuery.length < 3 && (
+              <div style={{ padding: 16, color: 'var(--text3)', fontSize: 13, textAlign: 'center' }}>
+                {selectedCity ? 'Digita almeno 3 caratteri per cercare' : 'Seleziona una città per iniziare'}
+              </div>
+            )}
+            {searchQuery.length >= 3 && (
               <div style={{ background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 'var(--radius-sm)', marginTop: 4, overflow: 'hidden' }}>
                 {searching && <div style={{ padding: 16, textAlign: 'center' }}><div className="loader" /></div>}
                 {!searching && searchResults.length === 0 && <div style={{ padding: 16, color: 'var(--text3)', fontSize: 13 }}>Nessun risultato</div>}
-                {searchResults.slice(0, 6).map(p => {
+                {searchResults.map(p => {
                   const already = visitedRestaurants.some(r => r.restaurant_id === p.id)
                   return (
                     <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--border)', overflow: 'hidden' }}>
@@ -264,15 +276,17 @@ export default function RistorantiPage() {
               </div>
             )}
           </div>
+          )}
 
-          {/* Grid */}
-          {loadingRestaurants
+          {/* Grid — only in visited/wishlist subtabs */}
+          {subTab !== 'search' && (
+          loadingRestaurants
             ? <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><div className="loader" /></div>
             : displayed.length === 0
             ? <div className="empty-state">
                 <div className="empty-state-icon">🍽️</div>
                 <h3>{subTab === 'wishlist' ? 'Nessun ristorante da provare' : 'Nessun ristorante ancora'}</h3>
-                <p>Cerca un ristorante qui sopra!</p>
+                <p>Vai al sub-tab <strong>🔍 Cerca</strong> per aggiungerne uno.</p>
               </div>
             : <div className="movies-grid">
                 {displayed.map(r => (
@@ -305,7 +319,8 @@ export default function RistorantiPage() {
                     </div>
                   </div>
                 ))}
-              </div>}
+              </div>
+          )}
         </div>
       )}
 
