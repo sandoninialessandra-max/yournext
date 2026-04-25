@@ -70,13 +70,13 @@ export default function MovieModal({ movieId, onClose, watchedMovies, onUpdate }
     onUpdate()
   }
 
-  const handleRating = async (r) => {
-    if (!isWatched) { toast('Aggiungi prima il film alla lista', 'error'); return }
-    setRating(r)
-    await db.updateRating(user.id, movieId, r)
-    toast('Voto salvato!', 'success')
-    onUpdate()
-  }
+	const handleRating = async (r) => {
+	  if (!isWatched) { toast('Aggiungi prima il film alla lista', 'error'); return }
+	  setRating(r)
+	  await db.updateRating(user.id, movieId, r || null)
+	  toast(r ? 'Voto salvato!' : 'Voto rimosso', 'success')
+	  onUpdate()
+	}
 
   const handleFullPlot = async () => {
     if (fullPlot) { setShowFullPlot(!showFullPlot); return }
@@ -137,37 +137,90 @@ export default function MovieModal({ movieId, onClose, watchedMovies, onUpdate }
             </div>
           </div>
 
-          {/* Action buttons */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
-            <button className={`btn ${isWatched ? 'btn-secondary' : 'btn-primary'} btn-sm`} onClick={handleToggleWatched}>
-              {isWatched ? <><EyeOff size={14} /> Rimuovi</>  : <><Eye size={14} /> Ho visto</>}
-            </button>
-            <button className={`btn btn-sm ${watched?.is_favorite ? 'btn-danger' : 'btn-ghost'}`} onClick={handleFavorite}>
-              <Heart size={14} fill={watched?.is_favorite ? 'currentColor' : 'none'} />
-              {watched?.is_favorite ? 'Preferito' : 'Preferito'}
-            </button>
-            <button className="btn btn-ghost btn-sm" onClick={() => setSendModal(!sendModal)}>
-              <Send size={14} /> Suggerisci
-            </button>
-          </div>
+		{/* Action buttons */}
+		<div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
+		  {!watched && <>
+			<button className="btn btn-primary btn-sm" onClick={handleToggleWatched}>
+			  <Eye size={14} /> Ho visto
+			</button>
+			<button className="btn btn-ghost btn-sm" onClick={async () => {
+			  await db.addToWishlist(user.id, movie)
+			  toast('Aggiunto alla wishlist! 🔖', 'success')
+			  onUpdate()
+			}}>
+			  🔖 Wishlist
+			</button>
+		  </>}
+
+		  {watched?.status === 'wishlist' && <>
+			<button className="btn btn-primary btn-sm" onClick={handleToggleWatched}>
+			  <Eye size={14} /> Ho visto
+			</button>
+			<button className="btn btn-secondary btn-sm" onClick={async () => {
+			  await db.removeWatchedMovie(user.id, movieId)
+			  toast('Rimosso dalla wishlist', 'success')
+			  onUpdate()
+			}}>
+			  🔖 Rimuovi da wishlist
+			</button>
+		  </>}
+
+		  {watched && watched.status !== 'wishlist' && <>
+			<button className="btn btn-secondary btn-sm" onClick={handleToggleWatched}>
+			  <EyeOff size={14} /> Rimuovi
+			</button>
+			<button className={`btn btn-sm ${watched?.is_favorite ? 'btn-danger' : 'btn-ghost'}`} onClick={handleFavorite}>
+			  <Heart size={14} fill={watched?.is_favorite ? 'currentColor' : 'none'} />
+			  {watched?.is_favorite ? 'Preferito' : 'Preferito'}
+			</button>
+			<button className="btn btn-ghost btn-sm" onClick={() => setSendModal(!sendModal)}>
+			  <Send size={14} /> Suggerisci
+			</button>
+		  </>}
+		</div>
 
           {/* Rating */}
-          {isWatched && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
-              <span style={{ fontSize: 12, color: 'var(--text3)' }}>Voto:</span>
-              <div className="stars">
-                {[1,2,3,4,5].map(s => (
-                  <span key={s} className={`star ${(hoverRating || rating) >= s ? 'active' : ''}`}
-                    onMouseEnter={() => setHoverRating(s)}
-                    onMouseLeave={() => setHoverRating(0)}
-                    onClick={() => handleRating(s)}>★</span>
-                ))}
-              </div>
-              {rating > 0 && <span style={{ fontSize: 11, color: 'var(--text3)' }}>{rating}/5</span>}
-            </div>
-          )}
+			{isWatched && (
+			  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
+				<span style={{ fontSize: 12, color: 'var(--text3)' }}>Voto:</span>
+				<div style={{ display: 'flex', gap: 2 }}>
+				  {[1, 2, 3, 4, 5].map(s => {
+					const val = hoverRating || rating
+					const full = val >= s
+					const half = !full && val >= s - 0.5
+					return (
+					  <span key={s} style={{ position: 'relative', display: 'inline-block', width: 24, height: 24, cursor: 'pointer' }}
+						onMouseLeave={() => setHoverRating(0)}>
+						<svg width="24" height="24" viewBox="0 0 24 24">
+						  <defs>
+							<linearGradient id={`star-${s}`}>
+							  <stop offset="50%" stopColor={half || full ? 'var(--accent)' : 'var(--text3)'} />
+							  <stop offset="50%" stopColor={full ? 'var(--accent)' : 'var(--text3)'} />
+							</linearGradient>
+						  </defs>
+						  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+							fill={full ? 'var(--accent)' : half ? `url(#star-${s})` : 'var(--text3)'}
+							stroke="none" />
+						</svg>
+						<span style={{ position: 'absolute', left: 0, width: '50%', height: '100%', zIndex: 2, top: 0 }}
+						  onMouseEnter={() => setHoverRating(s - 0.5)}
+						  onClick={e => { e.stopPropagation(); handleRating(s - 0.5) }} />
+						<span style={{ position: 'absolute', right: 0, width: '50%', height: '100%', zIndex: 2, top: 0 }}
+						  onMouseEnter={() => setHoverRating(s)}
+						  onClick={e => { e.stopPropagation(); handleRating(s) }} />
+					  </span>
+					)
+				  })}
+				</div>
+				{rating > 0 && (
+				  <button className="btn btn-ghost btn-sm" style={{ fontSize: 11, padding: '2px 6px' }}
+					onClick={() => handleRating(0)}>✕</button>
+				)}
+				{rating > 0 && <span style={{ fontSize: 11, color: 'var(--text3)' }}>{rating}/5</span>}
+			  </div>
+			)}          
 
-          {/* Send suggestion panel */}
+{/* Send suggestion panel */}
           {sendModal && (
             <div style={{ marginTop: 12, padding: 14, background: 'var(--bg3)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border2)' }}>
               <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 10 }}>Invia suggerimento a un amico</p>
