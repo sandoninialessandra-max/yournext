@@ -135,7 +135,7 @@ export default function RestaurantModal({ restaurantId, onClose, visitedRestaura
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ padding: 24 }}>
         <button className="modal-close" onClick={onClose}><X size={18} /></button>
 
         {/* Header — title block centrato */}

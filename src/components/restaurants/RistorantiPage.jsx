@@ -310,16 +310,20 @@ export default function RistorantiPage() {
                         </div>
                       </div>
                       <div className="restaurant-row-aside">
-                        {r.rating && <span>★ {r.rating}</span>}
+                        {r.rating && (
+                          <span style={{ color: 'var(--accent)', fontSize: 14, fontWeight: 600 }}>
+                            ★ {r.rating}
+                          </span>
+                        )}
                         <a
                           href={`https://maps.google.com/?q=${encodeURIComponent(`${r.restaurant_name} ${r.restaurant_address || ''} ${r.restaurant_city || ''}`)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={e => e.stopPropagation()}
                           title="Apri su Google Maps"
-                          style={{ display: 'flex', alignItems: 'center', color: 'var(--text3)', padding: 4, borderRadius: 4 }}
+                          style={{ display: 'flex', alignItems: 'center', color: 'var(--accent)', padding: 6, borderRadius: 6, background: 'var(--accent-glow)' }}
                         >
-                          <MapPin size={14} />
+                          <MapPin size={18} />
                         </a>
                       </div>
                     </div>

@@ -17,7 +17,7 @@ export default function Sidebar({ unreadCount = 0 }) {
 
   return (
     <nav className="sidebar">
-      <div className="nav-logo" title="Cinematica">C</div>
+      <div className="nav-logo" title="YourNext">YN</div>
       {navItems.map(({ icon: Icon, label, path, soon }) => (
         <button
           key={path}
