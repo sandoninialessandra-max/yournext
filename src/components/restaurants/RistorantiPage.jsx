@@ -310,7 +310,7 @@ export default function RistorantiPage() {
               </div>
             : <div className="restaurants-list">
                 {displayed.map(r => {
-                  const customLabels = (r.labels || []).filter(l => !FIXED_LABELS.includes(l))
+                  const rowLabels = r.labels || []
                   return (
                     <div key={r.restaurant_id} className="restaurant-row" onClick={() => setSelectedRestaurantId(r.restaurant_id)}>
                       {r.restaurant_cover
@@ -322,8 +322,8 @@ export default function RistorantiPage() {
                           {r.is_favorite && <span style={{ fontSize: 12 }}>❤️</span>}
                           {r.status === 'wishlist' && <Bookmark size={12} />}
                         </div>
-                        {customLabels.length > 0 && (
-                          <div className="restaurant-row-meta">{customLabels.slice(0, 3).join(' · ')}</div>
+                        {rowLabels.length > 0 && (
+                          <div className="restaurant-row-meta">{rowLabels.slice(0, 3).join(' · ')}{rowLabels.length > 3 ? ` +${rowLabels.length - 3}` : ''}</div>
                         )}
                       </div>
                       <div className="restaurant-row-aside">
