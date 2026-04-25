@@ -6,6 +6,7 @@ import { ai } from '../../lib/gemini.js'
 import { useAuth } from '../../hooks/useAuth.jsx'
 import { useToast } from '../shared/Toast.jsx'
 import RestaurantModal from './RestaurantModal.jsx'
+import RestaurantPlaceholder from './RestaurantPlaceholder.jsx'
 
 const TABS = ['I miei ristoranti', 'Scopri', 'Consigli AI']
 const CATEGORIES = ['Aperitivo', 'Cena', 'Romantico', 'Pizza', 'Italiano', 'Giapponese', 'Cinese', 'Hamburger']
@@ -257,7 +258,7 @@ export default function RistorantiPage() {
                     <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--border)', overflow: 'hidden' }}>
                       {p.cover
                         ? <img src={p.cover} alt={p.name} style={{ width: 36, height: 54, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }} />
-                        : <div style={{ width: 36, height: 54, background: 'var(--bg4)', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>🍽️</div>}
+                        : <RestaurantPlaceholder cuisine={p.cuisine} size="searchRow" style={{ width: 36, height: 54, borderRadius: 4, flexShrink: 0 }} />}
                       <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
                         <div style={{ fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
                         <div style={{ fontSize: 11, color: 'var(--text3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -293,7 +294,7 @@ export default function RistorantiPage() {
                   <div key={r.restaurant_id} className="movie-card" onClick={() => setSelectedRestaurantId(r.restaurant_id)}>
                     {r.restaurant_cover
                       ? <img className="movie-card-poster" src={r.restaurant_cover} alt={r.restaurant_name} loading="lazy" />
-                      : <div className="movie-card-poster-placeholder">🍽️</div>}
+                      : <RestaurantPlaceholder cuisine={r.restaurant_cuisine} className="movie-card-poster" />}
                     {r.is_favorite && <div className="movie-card-fav">❤️</div>}
                     {r.rating && <div className="movie-card-badge">★ {r.rating}</div>}
                     {r.status === 'wishlist' && <div style={{ position: 'absolute', top: 8, right: 8, fontSize: 14 }}><Bookmark size={14} /></div>}
@@ -373,7 +374,7 @@ export default function RistorantiPage() {
                           <div key={p.id} className="movie-card" onClick={() => setSelectedRestaurantId(p.id)}>
                             {p.cover
                               ? <img className="movie-card-poster" src={p.cover} alt={p.name} loading="lazy" />
-                              : <div className="movie-card-poster-placeholder">🍽️</div>}
+                              : <RestaurantPlaceholder cuisine={p.cuisine} className="movie-card-poster" />}
                             {p.rating && <div className="movie-card-badge">★ {p.rating}</div>}
                             <div className="movie-card-body">
                               <div className="movie-card-title">{p.name}</div>

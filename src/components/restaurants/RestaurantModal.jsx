@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import RestaurantPlaceholder from './RestaurantPlaceholder.jsx'
 import { X, Heart, Bookmark, Send, ChevronDown, ChevronUp, MapPin, Sparkles, Tag, Plus, Utensils } from 'lucide-react'
 import { placesProvider } from '../../lib/placesProvider.js'
 import { db } from '../../lib/db.js'
@@ -141,9 +142,7 @@ export default function RestaurantModal({ restaurantId, onClose, visitedRestaura
         <div style={{ display: 'flex', gap: 20, marginBottom: 20 }}>
           {place.cover
             ? <img src={place.cover} alt={place.name} style={{ width: 100, height: 150, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
-            : <div style={{ width: 100, height: 150, background: 'var(--bg4)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Utensils size={36} />
-              </div>}
+            : <RestaurantPlaceholder cuisine={place.cuisine} size="modal" style={{ width: 100, height: 150, borderRadius: 8, flexShrink: 0 }} />}
           <div style={{ flex: 1, minWidth: 0 }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 6, lineHeight: 1.3 }}>{place.name}</h2>
             {place.cuisine && <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 4 }}>{place.cuisine}</p>}
