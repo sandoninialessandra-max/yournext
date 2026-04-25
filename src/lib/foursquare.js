@@ -29,9 +29,11 @@ function formatPlace(item) {
   }
 }
 
-// Search/popular: omit `fields` to get the API's default Pro response.
-// Detail: request the additional Premium fields explicitly for the modal hero.
-const FIELDS_DETAIL = 'fsq_place_id,name,location,categories,price,rating,photos,description,hours,website'
+// All endpoints: omit `fields` to get the API's default Pro-only response.
+// Premium fields (photos, rating, price, hours, description, website) are
+// disabled here because the account currently has no Premium credits.
+// To re-enable when billing is configured: pass FIELDS_DETAIL on getPlace.
+// const FIELDS_DETAIL = 'fsq_place_id,name,location,categories,price,rating,photos,description,hours,website'
 
 export const foursquare = {
   async search(query, city) {
@@ -41,7 +43,7 @@ export const foursquare = {
     return (data.results || []).map(formatPlace).filter(Boolean)
   },
   async getPlace(id) {
-    const data = await fetchJson(`${FSQ_BASE}/${id}?fields=${FIELDS_DETAIL}`)
+    const data = await fetchJson(`${FSQ_BASE}/${id}`)
     return formatPlace(data)
   },
   async getPopular(city, category) {
