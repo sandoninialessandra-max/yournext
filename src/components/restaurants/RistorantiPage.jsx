@@ -191,18 +191,23 @@ export default function RistorantiPage() {
                     onClick={() => setSelectedCity(c.city_name)}
                   >
                     {c.city_name}
-                    <span
-                      className="city-chip-remove"
-                      onClick={(e) => { e.stopPropagation(); handleRemoveCity(c.city_name) }}
-                    >×</span>
+                    {subTab === 'search' && (
+                      <span
+                        className="city-chip-remove"
+                        onClick={(e) => { e.stopPropagation(); handleRemoveCity(c.city_name) }}
+                      >×</span>
+                    )}
                   </button>
                 ))}
-                <button
-                  className={`city-chip ${selectedCity === 'Altro' ? 'active' : ''}`}
-                  onClick={() => setSelectedCity('Altro')}
-                >
-                  Altro
-                </button>
+                {subTab !== 'search' && (
+                  <button
+                    className={`city-chip ${selectedCity === 'Altro' ? 'active' : ''}`}
+                    onClick={() => setSelectedCity('Altro')}
+                  >
+                    Altro
+                  </button>
+                )}
+                {subTab === 'search' && (
                 <div className="city-chip-add">
                   <input
                     placeholder="Aggiungi..."
@@ -212,6 +217,7 @@ export default function RistorantiPage() {
                   />
                   <button className="btn btn-sm btn-primary" onClick={handleAddCity}><Plus size={12} /></button>
                 </div>
+                )}
               </div>}
 
           {/* Label filter — hidden in search subtab */}
