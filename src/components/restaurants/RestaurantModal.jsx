@@ -31,7 +31,24 @@ export default function RestaurantModal({ restaurantId, onClose, visitedRestaura
   const inLibrary = !!entry
 
   useEffect(() => {
-    placesProvider.getPlace(restaurantId).then(p => { setPlace(p); setLoading(false) })
+    const cached = visitedRestaurants.find(r => r.restaurant_id === restaurantId)
+    if (cached) {
+      const fullAddr = `${cached.restaurant_name} ${cached.restaurant_address || ''} ${cached.restaurant_city || ''}`.trim()
+      setPlace({
+        id: cached.restaurant_id,
+        name: cached.restaurant_name,
+        address: cached.restaurant_address || '',
+        city: cached.restaurant_city || '',
+        cuisine: cached.restaurant_cuisine || '',
+        priceLevel: cached.restaurant_price_level ?? null,
+        rating: null,
+        cover: cached.restaurant_cover || null,
+        mapsUrl: `https://maps.google.com/?q=${encodeURIComponent(fullAddr)}`,
+      })
+      setLoading(false)
+    } else {
+      placesProvider.getPlace(restaurantId).then(p => { setPlace(p); setLoading(false) })
+    }
     db.getFriends(user.id).then(setFriends)
     db.getRestaurantSuggestionsForPlace(user.id, restaurantId).then(setIncomingSuggestions)
   }, [restaurantId, user.id])
