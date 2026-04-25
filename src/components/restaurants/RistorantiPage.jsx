@@ -313,9 +313,9 @@ export default function RistorantiPage() {
                   const rowLabels = r.labels || []
                   return (
                     <div key={r.restaurant_id} className="restaurant-row" onClick={() => setSelectedRestaurantId(r.restaurant_id)}>
-                      {r.restaurant_cover
-                        ? <img className="restaurant-row-thumb" src={r.restaurant_cover} alt={r.restaurant_name} style={{ objectFit: 'cover' }} loading="lazy" />
-                        : <RestaurantPlaceholder cuisine={r.restaurant_cuisine} size="searchRow" className="restaurant-row-thumb" />}
+                      {r.restaurant_cover && (
+                        <img className="restaurant-row-thumb" src={r.restaurant_cover} alt={r.restaurant_name} style={{ objectFit: 'cover' }} loading="lazy" />
+                      )}
                       <div className="restaurant-row-body">
                         <div className="restaurant-row-name">
                           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.restaurant_name}</span>
