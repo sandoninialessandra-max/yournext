@@ -1,5 +1,26 @@
 import { supabase } from './supabase.js'
 
+async function fetchSuggestions(table, userId) {
+  const { data } = await supabase
+    .from(table)
+    .select('*')
+    .eq('to_user_id', userId)
+    .order('created_at', { ascending: false })
+  return data || []
+}
+
+async function joinSenderProfiles(suggestions) {
+  if (!suggestions.length) return []
+  const senderIds = [...new Set(suggestions.map((s) => s.from_user_id).filter(Boolean))]
+  if (!senderIds.length) return suggestions.map((s) => ({ ...s, profiles: null }))
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, full_name, avatar_url')
+    .in('id', senderIds)
+  const profileMap = new Map((profiles || []).map((p) => [p.id, p]))
+  return suggestions.map((s) => ({ ...s, profiles: profileMap.get(s.from_user_id) || null }))
+}
+
 export const db = {
   // Watched movies
   async getWatchedMovies(userId) {
@@ -94,12 +115,7 @@ async getFriends(userId) {
   },
 
 async getSuggestions(userId) {
-  const { data } = await supabase
-    .from('movie_suggestions')
-    .select('*, profiles!movie_suggestions_from_user_id_fkey(full_name, avatar_url)')
-    .eq('to_user_id', userId)
-    .order('created_at', { ascending: false })
-  return data || []
+  return joinSenderProfiles(await fetchSuggestions('movie_suggestions', userId))
 },
 
   async markSuggestionRead(id) {
@@ -196,12 +212,7 @@ async getSuggestions(userId) {
   },
 
   async getBookSuggestions(userId) {
-    const { data } = await supabase
-      .from('book_suggestions')
-      .select('*, profiles!book_suggestions_from_user_id_fkey(full_name, avatar_url)')
-      .eq('to_user_id', userId)
-      .order('created_at', { ascending: false })
-    return data || []
+    return joinSenderProfiles(await fetchSuggestions('book_suggestions', userId))
   },
 
   async markBookSuggestionRead(id) {
@@ -283,12 +294,7 @@ async getSuggestions(userId) {
   },
 
   async getRestaurantSuggestions(userId) {
-    const { data } = await supabase
-      .from('restaurant_suggestions')
-      .select('*, profiles!restaurant_suggestions_from_user_id_fkey(full_name, avatar_url)')
-      .eq('to_user_id', userId)
-      .order('created_at', { ascending: false })
-    return data || []
+    return joinSenderProfiles(await fetchSuggestions('restaurant_suggestions', userId))
   },
 
   async markRestaurantSuggestionRead(id) {
