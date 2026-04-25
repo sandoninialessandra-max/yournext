@@ -15,12 +15,16 @@ function formatPlace(item) {
   const name = item.name || 'Locale sconosciuto'
   const address = loc.address || ''
   const photo = item.photos?.[0]
+  const cuisine =
+    item.fsq_category_labels?.[0] ||
+    item.categories?.[0]?.name ||
+    ''
   return {
     id: item.fsq_place_id || item.fsq_id || item.id,
     name,
     address,
     city: loc.locality || loc.region || '',
-    cuisine: item.categories?.[0]?.name || '',
+    cuisine,
     priceLevel: item.price ?? null,
     rating: item.rating ?? null,
     cover: photo ? `${photo.prefix}300x300${photo.suffix}` : null,
@@ -28,8 +32,11 @@ function formatPlace(item) {
   }
 }
 
-const FIELDS_SEARCH = 'fsq_place_id,name,location,categories,price,rating,photos'
-const FIELDS_DETAIL = 'fsq_place_id,name,location,categories,price,rating,photos,description,hours,website'
+// Pro-only fields (free tier eligible) — used for search/popular lists.
+// Drops photos/rating/price (Premium, billable) to stay within free quota
+// when listing many results. Detail view uses FIELDS_DETAIL with premiums.
+const FIELDS_SEARCH = 'fsq_place_id,name,location,fsq_category_labels'
+const FIELDS_DETAIL = 'fsq_place_id,name,location,fsq_category_labels,price,rating,photos,description,hours,website'
 
 export const foursquare = {
   async search(query, city) {
