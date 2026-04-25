@@ -60,6 +60,22 @@ export default function RistorantiPage() {
     }
   }, [tab, selectedCity, selectedCategory])
 
+  useEffect(() => {
+    if (searchQuery.length < 2 || !selectedCity) {
+      setSearchResults([])
+      setSearching(false)
+      return
+    }
+    setSearching(true)
+    const city = selectedCity === 'Altro' ? '' : selectedCity
+    const timer = setTimeout(() => {
+      placesProvider.search(searchQuery, city)
+        .then(setSearchResults)
+        .finally(() => setSearching(false))
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [searchQuery, selectedCity])
+
   const handleAddCity = async () => {
     const name = newCityInput.trim()
     if (!name) return
@@ -78,14 +94,8 @@ export default function RistorantiPage() {
     if (selectedCity === cityName) setSelectedCity(data.length > 0 ? data[0].city_name : null)
   }
 
-  const handleSearch = async (q) => {
+  const handleSearch = (q) => {
     setSearchQuery(q)
-    if (q.length < 2 || !selectedCity) { setSearchResults([]); return }
-    setSearching(true)
-    const city = selectedCity === 'Altro' ? '' : selectedCity
-    const results = await placesProvider.search(q, city)
-    setSearchResults(results)
-    setSearching(false)
   }
 
   const handleAddFromSearch = async (place, status) => {
