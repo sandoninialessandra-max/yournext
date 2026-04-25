@@ -11,7 +11,7 @@ import RestaurantPlaceholder from './RestaurantPlaceholder.jsx'
 
 const TABS = ['I miei ristoranti', 'Scopri', 'Consigli AI']
 const CATEGORIES = ['Aperitivo', 'Cena', 'Romantico', 'Pizza', 'Italiano', 'Giapponese', 'Cinese', 'Hamburger']
-const FIXED_LABELS = ['🍹 Aperitivo', '🍽️ Cena', '☀️ Pranzo', '💑 Romantico', '👥 Amici', '👨‍👩‍👧 Famiglia', '💼 Lavoro', '⭐ Speciale']
+const FIXED_LABELS = ["All'aperto", 'Particolare', 'Vista', 'Cena', 'Aperitivo', 'Pranzo', 'Pub']
 const priceSymbol = (n) => n ? '€'.repeat(n) : '—'
 
 export default function RistorantiPage() {
@@ -36,6 +36,7 @@ export default function RistorantiPage() {
   const setSelectedRestaurantId = (id) => setSearchParams(id ? { r: id } : {})
   const [aiSuggestions, setAiSuggestions] = useState(null)
   const [loadingAi, setLoadingAi] = useState(false)
+  const [filterFav, setFilterFav] = useState(false)
 
   const loadRestaurants = useCallback(async () => {
     if (!user) return
@@ -133,6 +134,7 @@ export default function RistorantiPage() {
       return r.restaurant_city === selectedCity
     })
     .filter(r => selectedLabels.length === 0 || (r.labels || []).some(l => selectedLabels.includes(l)))
+    .filter(r => !filterFav || r.is_favorite)
 
   const favoriteCount = visitedRestaurants.filter(r => r.is_favorite).length
 
@@ -165,6 +167,14 @@ export default function RistorantiPage() {
             <button className={`btn btn-sm ${subTab === 'search' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setSubTab('search')}>
               🔍 Cerca
             </button>
+            {subTab === 'visited' && (
+              <button
+                className={`btn btn-sm ${filterFav ? 'btn-danger' : 'btn-secondary'}`}
+                onClick={() => setFilterFav(!filterFav)}
+              >
+                <Heart size={12} fill={filterFav ? 'currentColor' : 'none'} /> Preferiti ({favoriteCount})
+              </button>
+            )}
           </div>
 
           {/* City selector */}
