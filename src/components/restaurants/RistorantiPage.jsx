@@ -52,7 +52,7 @@ export default function RistorantiPage() {
   useEffect(() => { loadCities() }, [loadCities])
 
   useEffect(() => {
-    if (tab === 'Scopri' && selectedCity && selectedCity !== 'Altro' && selectedCategory) {
+    if (tab === 'Scopri' && selectedCity && selectedCity !== 'Altro') {
       setLoadingPopular(true)
       placesProvider.getPopular(selectedCity, selectedCategory)
         .then(setPopular)

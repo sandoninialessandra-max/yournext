@@ -15,10 +15,7 @@ function formatPlace(item) {
   const name = item.name || 'Locale sconosciuto'
   const address = loc.address || ''
   const photo = item.photos?.[0]
-  const cuisine =
-    item.fsq_category_labels?.[0] ||
-    item.categories?.[0]?.name ||
-    ''
+  const cuisine = item.categories?.[0]?.name || item.categories?.[0] || ''
   return {
     id: item.fsq_place_id || item.fsq_id || item.id,
     name,
@@ -32,19 +29,13 @@ function formatPlace(item) {
   }
 }
 
-// Pro-only fields (free tier eligible) — used for search/popular lists.
-// Drops photos/rating/price (Premium, billable) to stay within free quota
-// when listing many results. Detail view uses FIELDS_DETAIL with premiums.
-const FIELDS_SEARCH = 'fsq_place_id,name,location,fsq_category_labels'
-const FIELDS_DETAIL = 'fsq_place_id,name,location,fsq_category_labels,price,rating,photos,description,hours,website'
+// Search/popular: omit `fields` to get the API's default Pro response.
+// Detail: request the additional Premium fields explicitly for the modal hero.
+const FIELDS_DETAIL = 'fsq_place_id,name,location,categories,price,rating,photos,description,hours,website'
 
 export const foursquare = {
   async search(query, city) {
-    const params = new URLSearchParams({
-      query,
-      limit: '12',
-      fields: FIELDS_SEARCH,
-    })
+    const params = new URLSearchParams({ query, limit: '12' })
     if (city) params.set('near', city)
     const data = await fetchJson(`${FSQ_BASE}/search?${params.toString()}`)
     return (data.results || []).map(formatPlace).filter(Boolean)
@@ -54,12 +45,8 @@ export const foursquare = {
     return formatPlace(data)
   },
   async getPopular(city, category) {
-    const params = new URLSearchParams({
-      query: category || '',
-      limit: '12',
-      sort: 'POPULARITY',
-      fields: FIELDS_SEARCH,
-    })
+    const params = new URLSearchParams({ limit: '12', sort: 'POPULARITY' })
+    if (category) params.set('query', category)
     if (city) params.set('near', city)
     const data = await fetchJson(`${FSQ_BASE}/search?${params.toString()}`)
     return (data.results || []).map(formatPlace).filter(Boolean)
