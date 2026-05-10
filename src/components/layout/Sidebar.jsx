@@ -10,9 +10,9 @@ export default function Sidebar({ unreadCount = 0 }) {
 
   const navItems = [
     { icon: Film, label: 'Cinema', path: '/cinema' },
+    { icon: Tv, label: 'Serie TV', path: '/tv' },
     { icon: BookOpen, label: 'Libri', path: '/books' },
     { icon: Utensils, label: 'Ristoranti', path: '/ristoranti' },
-    { icon: Tv, label: 'Serie TV', path: '/tv' },
     { icon: Map, label: 'Viaggi', path: '/travel', soon: true },
   ]
 
