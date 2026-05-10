@@ -8,6 +8,8 @@ export default async function handler(req, res) {
       FOURSQUARE_API_KEY: process.env.FOURSQUARE_API_KEY ? `set (${process.env.FOURSQUARE_API_KEY.length} chars)` : 'NOT SET',
       VITE_FOURSQUARE_API_KEY: process.env.VITE_FOURSQUARE_API_KEY ? `set (${process.env.VITE_FOURSQUARE_API_KEY.length} chars)` : 'NOT SET',
       NODE_ENV: process.env.NODE_ENV,
+      VERCEL_PROJECT_ID: process.env.VERCEL_PROJECT_ID || 'n/a',
+      VERCEL_GIT_REPO_SLUG: process.env.VERCEL_GIT_REPO_SLUG || 'n/a',
     })
     return
   }
