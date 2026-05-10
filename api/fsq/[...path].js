@@ -17,7 +17,6 @@ export default async function handler(req, res) {
     return
   }
 
-  const pathArr = req.query.path || []
   const pathSuffix = Array.isArray(pathArr) ? '/' + pathArr.join('/') : '/' + pathArr
 
   const forwardParams = new URLSearchParams()
