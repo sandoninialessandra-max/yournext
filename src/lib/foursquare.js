@@ -38,7 +38,7 @@ const FIELDS_PRO = 'fsq_place_id,name,location,categories'
 export const foursquare = {
   async search(query, city) {
     const params = new URLSearchParams({ query, limit: '12', fields: FIELDS_PRO })
-    if (city) params.set('near', city.includes(',') ? city : `${city}, Italy`)
+    if (city) params.set('near', city)
     const data = await fetchJson(`${FSQ_BASE}/search?${params.toString()}`)
     return (data.results || []).map(formatPlace).filter(Boolean)
   },
@@ -49,7 +49,7 @@ export const foursquare = {
   async getPopular(city, category) {
     const params = new URLSearchParams({ limit: '12', sort: 'POPULARITY', fields: FIELDS_PRO })
     if (category) params.set('query', category)
-    if (city) params.set('near', city.includes(',') ? city : `${city}, Italy`)
+    if (city) params.set('near', city)
     const data = await fetchJson(`${FSQ_BASE}/search?${params.toString()}`)
     return (data.results || []).map(formatPlace).filter(Boolean)
   },

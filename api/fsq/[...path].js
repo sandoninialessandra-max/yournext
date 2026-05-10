@@ -8,8 +8,8 @@ export default async function handler(req, res) {
   // diagnostic endpoint
   if (pathSuffix === '/debug') {
     res.status(200).json({
-      FOURSQUARE_API_KEY: process.env.FOURSQUARE_API_KEY ? `set (${process.env.FOURSQUARE_API_KEY.length} chars)` : 'NOT SET',
-      VITE_FOURSQUARE_API_KEY: process.env.VITE_FOURSQUARE_API_KEY ? `set (${process.env.VITE_FOURSQUARE_API_KEY.length} chars)` : 'NOT SET',
+      FOURSQUARE_API_KEY: process.env.FOURSQUARE_API_KEY ? `set (${process.env.FOURSQUARE_API_KEY.length} chars, starts: ${process.env.FOURSQUARE_API_KEY.slice(0, 4)})` : 'NOT SET',
+      VITE_FOURSQUARE_API_KEY: process.env.VITE_FOURSQUARE_API_KEY ? `set (${process.env.VITE_FOURSQUARE_API_KEY.length} chars, starts: ${process.env.VITE_FOURSQUARE_API_KEY.slice(0, 4)})` : 'NOT SET',
       NODE_ENV: process.env.NODE_ENV,
       VERCEL_PROJECT_ID: process.env.VERCEL_PROJECT_ID || 'n/a',
       parsedPath: pathSuffix,
