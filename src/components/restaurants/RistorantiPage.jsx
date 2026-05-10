@@ -77,6 +77,7 @@ export default function RistorantiPage() {
     const timer = setTimeout(() => {
       placesProvider.search(searchQuery, city)
         .then(setSearchResults)
+        .catch(err => { console.error('Search error:', err); toast(err.message, 'error') })
         .finally(() => setSearching(false))
     }, 400)
     return () => clearTimeout(timer)
