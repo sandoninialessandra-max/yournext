@@ -165,9 +165,6 @@ export default function RistorantiPage() {
             <button className={`btn btn-sm ${subTab === 'wishlist' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setSubTab('wishlist')}>
               🔖 Wishlist ({wishlist.length})
             </button>
-            <button className={`btn btn-sm ${subTab === 'search' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setSubTab('search')}>
-              🔍 Cerca
-            </button>
             {subTab === 'visited' && (
               <button
                 className={`btn btn-sm ${filterFav ? 'btn-danger' : 'btn-secondary'}`}
@@ -202,15 +199,13 @@ export default function RistorantiPage() {
                     onClick={() => setSelectedCity(c.city_name)}
                   >
                     {c.city_name}
-                    {subTab === 'search' && (
-                      <span
-                        className="city-chip-remove"
-                        onClick={(e) => { e.stopPropagation(); handleRemoveCity(c.city_name) }}
-                      >×</span>
-                    )}
+                    <span
+                      className="city-chip-remove"
+                      onClick={(e) => { e.stopPropagation(); handleRemoveCity(c.city_name) }}
+                    >×</span>
                   </button>
                 ))}
-                {subTab !== 'search' && (
+                {!searchQuery && (
                   <button
                     className={`city-chip ${selectedCity === 'Altro' ? 'active' : ''}`}
                     onClick={() => setSelectedCity('Altro')}
@@ -218,7 +213,6 @@ export default function RistorantiPage() {
                     Altro
                   </button>
                 )}
-                {subTab === 'search' && (
                 <div className="city-chip-add">
                   <input
                     placeholder="Aggiungi..."
@@ -228,11 +222,10 @@ export default function RistorantiPage() {
                   />
                   <button className="btn btn-sm btn-primary" onClick={handleAddCity}><Plus size={12} /></button>
                 </div>
-                )}
               </div>}
 
-          {/* Label filter — hidden in search subtab */}
-          {subTab !== 'search' && (() => {
+          {/* Label filter — hidden while searching */}
+          {!searchQuery && (() => {
             const usedLabels = new Set(visitedRestaurants.flatMap(r => r.labels || []))
             const customUsed = [...usedLabels].filter(l => !FIXED_LABELS.includes(l))
             const visibleLabels = expandedFilters
@@ -267,25 +260,18 @@ export default function RistorantiPage() {
             )
           })()}
 
-          {/* Search — only in search subtab */}
-          {subTab === 'search' && (
+          {/* Search */}
           <div style={{ marginBottom: 16 }}>
             <div className="search-bar">
               <Search size={16} className="search-bar-icon" />
               <input
                 className="input"
-                placeholder={selectedCity ? 'Cerca un ristorante...' : 'Seleziona prima una città'}
+                placeholder={selectedCity && selectedCity !== 'Altro' ? `Cerca un ristorante a ${selectedCity}...` : 'Seleziona prima una città'}
                 value={searchQuery}
                 onChange={e => handleSearch(e.target.value)}
-                disabled={!selectedCity}
-                autoFocus
+                disabled={!selectedCity || selectedCity === 'Altro'}
               />
             </div>
-            {searchQuery.length < 3 && (
-              <div style={{ padding: 16, color: 'var(--text3)', fontSize: 13, textAlign: 'center' }}>
-                {selectedCity ? 'Digita almeno 3 caratteri per cercare' : 'Seleziona una città per iniziare'}
-              </div>
-            )}
             {searchQuery.length >= 3 && (
               <div style={{ background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 'var(--radius-sm)', marginTop: 4, overflow: 'hidden' }}>
                 {searching && <div style={{ padding: 16, textAlign: 'center' }}><div className="loader" /></div>}
@@ -315,17 +301,16 @@ export default function RistorantiPage() {
               </div>
             )}
           </div>
-          )}
 
-          {/* Grid — only in visited/wishlist subtabs */}
-          {subTab !== 'search' && (
+          {/* Grid */}
+          {!searchQuery && (
           loadingRestaurants
             ? <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><div className="loader" /></div>
             : displayed.length === 0
             ? <div className="empty-state">
                 <div className="empty-state-icon">🍽️</div>
                 <h3>{subTab === 'wishlist' ? 'Nessun ristorante da provare' : 'Nessun ristorante ancora'}</h3>
-                <p>Vai al sub-tab <strong>🔍 Cerca</strong> per aggiungerne uno.</p>
+                <p>Cerca un ristorante qui sopra per aggiungerne uno.</p>
               </div>
             : <div className="restaurants-list">
                 {displayed.map(r => {
