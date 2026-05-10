@@ -1,5 +1,17 @@
 export default async function handler(req, res) {
   const key = process.env.FOURSQUARE_API_KEY || process.env.VITE_FOURSQUARE_API_KEY
+
+  // diagnostic: /api/fsq/debug returns env info without exposing key value
+  const pathArr = req.query.path || []
+  if (pathArr[0] === 'debug') {
+    res.status(200).json({
+      FOURSQUARE_API_KEY: process.env.FOURSQUARE_API_KEY ? `set (${process.env.FOURSQUARE_API_KEY.length} chars)` : 'NOT SET',
+      VITE_FOURSQUARE_API_KEY: process.env.VITE_FOURSQUARE_API_KEY ? `set (${process.env.VITE_FOURSQUARE_API_KEY.length} chars)` : 'NOT SET',
+      NODE_ENV: process.env.NODE_ENV,
+    })
+    return
+  }
+
   if (!key) {
     res.status(500).json({ error: 'FOURSQUARE_API_KEY not configured on server' })
     return
