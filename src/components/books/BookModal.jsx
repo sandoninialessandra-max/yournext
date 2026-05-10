@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Heart, BookOpen, Bookmark, Trash2, Send, ChevronDown, ChevronUp } from 'lucide-react'
+import { X, Heart, BookOpen, Bookmark, Trash2, Send, ChevronDown, ChevronUp, Pencil } from 'lucide-react'
 import { googleBooks } from '../../lib/googlebooks.js'
 import { db } from '../../lib/db.js'
 import { ai } from '../../lib/gemini.js'
@@ -21,6 +21,8 @@ export default function BookModal({ bookId, onClose, readBooks, onUpdate }) {
   const [selectedFriend, setSelectedFriend] = useState(null)
   const [progressInput, setProgressInput] = useState('')
   const [editingProgress, setEditingProgress] = useState(false)
+  const [editingPages, setEditingPages] = useState(false)
+  const [pagesInput, setPagesInput] = useState('')
 
   const entry = readBooks.find(b => b.book_id === bookId)
   const isRead = entry?.status === 'read'
@@ -35,6 +37,7 @@ export default function BookModal({ bookId, onClose, readBooks, onUpdate }) {
 
   useEffect(() => {
     if (entry?.current_page) setProgressInput(String(entry.current_page))
+    if (entry?.book_pages) setPagesInput(String(entry.book_pages))
   }, [entry])
 
   const handleStatus = async (status) => {
@@ -71,6 +74,15 @@ export default function BookModal({ bookId, onClose, readBooks, onUpdate }) {
     onUpdate()
   }
 
+  const handleSavePages = async () => {
+    const pages = parseInt(pagesInput)
+    if (isNaN(pages) || pages < 1) return
+    await db.updateBookPages(user.id, bookId, pages)
+    toast('Numero pagine aggiornato!', 'success')
+    setEditingPages(false)
+    onUpdate()
+  }
+
   const handleSuggest = async () => {
     if (!selectedFriend || !book) return
     await db.sendBookSuggestion(user.id, selectedFriend, book, suggestComment)
@@ -102,8 +114,9 @@ export default function BookModal({ bookId, onClose, readBooks, onUpdate }) {
     } else toast('Libro non trovato su Google Books', 'error')
   }
 
-  const progressPct = book?.pages && entry?.current_page
-    ? Math.min(100, Math.round((entry.current_page / book.pages) * 100)) : 0
+  const effectivePages = entry?.book_pages || book?.pages
+  const progressPct = effectivePages && entry?.current_page
+    ? Math.min(100, Math.round((entry.current_page / effectivePages) * 100)) : 0
 
   if (loading) return (
     <div className="modal-overlay" onClick={onClose}>
@@ -131,7 +144,33 @@ export default function BookModal({ bookId, onClose, readBooks, onUpdate }) {
             {book.publisher && <p style={{ color: 'var(--text3)', fontSize: 12, marginBottom: 4 }}>{book.publisher}</p>}
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 12, color: 'var(--text3)', marginBottom: 8 }}>
               {book.year && <span>📅 {book.year}</span>}
-              {book.pages && <span>📄 {book.pages} pagine</span>}
+              {(effectivePages || book.pages) && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  {editingPages
+                    ? <>
+                        <input
+                          type="number" className="input" value={pagesInput}
+                          onChange={e => setPagesInput(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') handleSavePages(); if (e.key === 'Escape') setEditingPages(false) }}
+                          min={1} style={{ width: 70, fontSize: 12, padding: '2px 6px' }}
+                          autoFocus
+                        />
+                        <span style={{ fontSize: 12, color: 'var(--text3)' }}>pag.</span>
+                        <button className="btn btn-primary btn-sm" style={{ padding: '2px 8px', fontSize: 11 }} onClick={handleSavePages}>✓</button>
+                        <button className="btn btn-ghost btn-sm" style={{ padding: '2px 6px', fontSize: 11 }} onClick={() => setEditingPages(false)}>✕</button>
+                      </>
+                    : <>
+                        📄 {effectivePages || book.pages} pagine
+                        {inLibrary && (
+                          <button onClick={() => { setPagesInput(String(effectivePages || book.pages)); setEditingPages(true) }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', padding: '0 2px', lineHeight: 1 }}
+                            title="Modifica numero pagine">
+                            <Pencil size={11} />
+                          </button>
+                        )}
+                      </>}
+                </span>
+              )}
               {book.averageRating && <span>★ {book.averageRating}/5</span>}
             </div>
             {book.categories?.length > 0 && (
@@ -153,7 +192,7 @@ export default function BookModal({ bookId, onClose, readBooks, onUpdate }) {
         )}
 
         {/* Progress bar — solo se in lettura */}
-        {isReading && book.pages > 0 && (
+        {isReading && effectivePages > 0 && (
           <div style={{ marginBottom: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <span style={{ fontSize: 12, color: 'var(--text3)' }}>Progresso lettura</span>
@@ -167,15 +206,15 @@ export default function BookModal({ bookId, onClose, readBooks, onUpdate }) {
                   <input
                     type="number" className="input" value={progressInput}
                     onChange={e => setProgressInput(e.target.value)}
-                    placeholder="Pagina attuale" min={0} max={book.pages}
+                    placeholder="Pagina attuale" min={0} max={effectivePages}
                     style={{ width: 120, fontSize: 13 }}
                   />
-                  <span style={{ fontSize: 12, color: 'var(--text3)' }}>/ {book.pages}</span>
+                  <span style={{ fontSize: 12, color: 'var(--text3)' }}>/ {effectivePages}</span>
                   <button className="btn btn-primary btn-sm" onClick={handleProgress}>Salva</button>
                   <button className="btn btn-ghost btn-sm" onClick={() => setEditingProgress(false)}>Annulla</button>
                 </div>
               : <button className="btn btn-ghost btn-sm" onClick={() => setEditingProgress(true)}>
-                  📖 Aggiorna pagina ({entry?.current_page || 0} / {book.pages})
+                  📖 Aggiorna pagina ({entry?.current_page || 0} / {effectivePages})
                 </button>}
           </div>
         )}

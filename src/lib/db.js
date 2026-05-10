@@ -189,6 +189,10 @@ async getSuggestions(userId) {
     return supabase.from('read_books').update({ current_page: currentPage }).eq('user_id', userId).eq('book_id', bookId)
   },
 
+  async updateBookPages(userId, bookId, pages) {
+    return supabase.from('read_books').update({ book_pages: pages }).eq('user_id', userId).eq('book_id', bookId)
+  },
+
   async updateBookRating(userId, bookId, rating) {
     return supabase.from('read_books').update({ rating }).eq('user_id', userId).eq('book_id', bookId)
   },
