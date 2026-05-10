@@ -36,6 +36,8 @@ export default function RistorantiPage() {
   const setSelectedRestaurantId = (id) => setSearchParams(id ? { r: id } : {})
   const [aiSuggestions, setAiSuggestions] = useState(null)
   const [loadingAi, setLoadingAi] = useState(false)
+  const [aiCity, setAiCity] = useState(null)
+  const [aiLabels, setAiLabels] = useState([])
   const [filterFav, setFilterFav] = useState(false)
   const [expandedFilters, setExpandedFilters] = useState(false)
 
@@ -439,22 +441,63 @@ export default function RistorantiPage() {
                 </button>
               </div>
             : !aiSuggestions
-            ? <div className="ai-card" style={{ textAlign: 'center' }}>
-                <Sparkles size={32} style={{ color: 'var(--accent)', marginBottom: 16 }} />
-                <h3 style={{ marginBottom: 8 }}>Consigli personalizzati</h3>
-                <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 20 }}>
-                  L'AI analizzerà i tuoi {visited.length} ristoranti visitati per suggerirti nuovi posti da provare.
-                </p>
-                <button className="btn btn-primary" onClick={async () => {
-                  setLoadingAi(true)
-                  const suggestions = await ai.getPersonalizedRestaurantSuggestions(visitedRestaurants)
-                  setAiSuggestions(suggestions)
-                  setLoadingAi(false)
-                }} disabled={loadingAi}>
-                  {loadingAi ? <><span className="loader" style={{ width: 14, height: 14 }} /> Analisi...</> : <><Sparkles size={14} /> Genera consigli</>}
-                </button>
+            ? <div>
+                {/* Città */}
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 8 }}>In quale città?</div>
+                  {userCities.length === 0
+                    ? <p style={{ fontSize: 13, color: 'var(--text3)' }}>Aggiungi prima una città preferita.</p>
+                    : <div className="city-chips-row">
+                        {userCities.map(c => (
+                          <button
+                            key={c.id}
+                            className={`city-chip ${aiCity === c.city_name ? 'active' : ''}`}
+                            onClick={() => setAiCity(aiCity === c.city_name ? null : c.city_name)}
+                          >
+                            {c.city_name}
+                          </button>
+                        ))}
+                      </div>}
+                </div>
+
+                {/* Etichette */}
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 8 }}>Che tipo di esperienza cerchi? (anche più di una)</div>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {FIXED_LABELS.map(l => (
+                      <button
+                        key={l}
+                        className={`label-pill ${aiLabels.includes(l) ? 'label-pill-selected' : ''}`}
+                        onClick={() => setAiLabels(prev => prev.includes(l) ? prev.filter(x => x !== l) : [...prev, l])}
+                      >
+                        {l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="ai-card" style={{ textAlign: 'center' }}>
+                  <Sparkles size={28} style={{ color: 'var(--accent)', marginBottom: 12 }} />
+                  <p style={{ color: 'var(--text2)', fontSize: 13, marginBottom: 16 }}>
+                    {aiCity && aiLabels.length > 0
+                      ? `Suggerimenti a ${aiCity} per: ${aiLabels.join(', ')}`
+                      : 'Seleziona città e almeno un\'etichetta per generare i consigli.'}
+                  </p>
+                  <button className="btn btn-primary" disabled={!aiCity || aiLabels.length === 0 || loadingAi}
+                    onClick={async () => {
+                      setLoadingAi(true)
+                      const suggestions = await ai.getPersonalizedRestaurantSuggestions(visitedRestaurants, { city: aiCity, labels: aiLabels })
+                      setAiSuggestions(suggestions)
+                      setLoadingAi(false)
+                    }}>
+                    {loadingAi ? <><span className="loader" style={{ width: 14, height: 14 }} /> Analisi...</> : <><Sparkles size={14} /> Genera consigli</>}
+                  </button>
+                </div>
               </div>
             : <div>
+                <div style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 12 }}>
+                  📍 {aiCity} · {aiLabels.join(', ')}
+                </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
                   {aiSuggestions.map((s, i) => (
                     <div key={i} className="ai-card" style={{ cursor: 'pointer' }} onClick={() => handleAiClick(s)}>

@@ -251,9 +251,11 @@ Rispondi SOLO in JSON: [{"title": "...", "original_title": "...", "year": "...",
   },
 
   // Consigli ristoranti personalizzati: Gemini-first, Groq fallback
-  async getPersonalizedRestaurantSuggestions(visitedRestaurants) {
+  // context: { city?: string, labels?: string[] } — optional targeting from UI
+  async getPersonalizedRestaurantSuggestions(visitedRestaurants, context = {}) {
     if (!visitedRestaurants?.length) return []
 
+    const { city, labels: targetLabels } = context
     const favorites = visitedRestaurants.filter(r => r.is_favorite).slice(0, 10)
     const recent = visitedRestaurants.slice(0, 15)
 
@@ -270,19 +272,20 @@ Rispondi SOLO in JSON: [{"title": "...", "original_title": "...", "year": "...",
     }).join('; ')
 
     const cuisines = [...new Set(visitedRestaurants.map(r => r.restaurant_cuisine).filter(Boolean))].slice(0, 10).join(', ') || 'non definita'
-    const cities = [...new Set(visitedRestaurants.map(r => r.restaurant_city).filter(Boolean))].slice(0, 10).join(', ') || 'non definita'
     const priceLevels = [...new Set(visitedRestaurants.map(r => r.restaurant_price_level).filter(Boolean))].sort().join(', ') || 'non definita'
-    const labels = [...new Set(visitedRestaurants.flatMap(r => r.labels || []))].slice(0, 10).join(', ') || 'nessuna'
+
+    const cityLine = city ? `Città richiesta: ${city}` : `Città frequentate: ${[...new Set(visitedRestaurants.map(r => r.restaurant_city).filter(Boolean))].slice(0, 10).join(', ') || 'non definita'}`
+    const labelsLine = targetLabels?.length ? `Occasioni/etichette richieste: ${targetLabels.join(', ')}` : `Etichette/occasioni: ${[...new Set(visitedRestaurants.flatMap(r => r.labels || []))].slice(0, 10).join(', ') || 'nessuna'}`
 
     const prompt = `Sei un esperto di ristorazione italiana. Analizza i gusti di questo utente:
 Ristoranti preferiti: ${favSummary}
 Cronologia recente: ${recentSummary}
 Cucine frequentate: ${cuisines}
-Città frequentate: ${cities}
+${cityLine}
 Fasce prezzo tipiche (1-4): ${priceLevels}
-Etichette/occasioni: ${labels}
+${labelsLine}
 
-Suggerisci 8 ristoranti reali che potrebbero piacergli, preferibilmente nelle città che frequenta o in città italiane affini, diversificando cucina e fascia prezzo coerente. Per ognuno: nome, città, cucina, motivazione personalizzata in italiano, stelle di affinità (1-5).
+Suggerisci 6 ristoranti reali adatti${city ? ` a ${city}` : ''}${targetLabels?.length ? ` per ${targetLabels.join(' e ')}` : ''}, coerenti con i gusti dell'utente. Per ognuno: nome, città, cucina, motivazione personalizzata in italiano, stelle di affinità (1-5).
 Rispondi SOLO in JSON: [{"name": "...", "city": "...", "cuisine": "...", "reason": "...", "stars": 4}]`
 
     try {
