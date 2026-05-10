@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Film, BookOpen, Utensils, Map, Bell, User, LogOut } from 'lucide-react'
+import { Film, BookOpen, Utensils, Tv, Map, Bell, User, LogOut } from 'lucide-react'
 import { signOut } from '../../lib/supabase.js'
 import { useAuth } from '../../hooks/useAuth.jsx'
 
@@ -12,6 +12,7 @@ export default function Sidebar({ unreadCount = 0 }) {
     { icon: Film, label: 'Cinema', path: '/cinema' },
     { icon: BookOpen, label: 'Libri', path: '/books' },
     { icon: Utensils, label: 'Ristoranti', path: '/ristoranti' },
+    { icon: Tv, label: 'Serie TV', path: '/tv' },
     { icon: Map, label: 'Viaggi', path: '/travel', soon: true },
   ]
 

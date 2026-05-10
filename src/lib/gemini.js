@@ -197,6 +197,59 @@ Rispondi SOLO in JSON: [{"name": "...", "city": "...", "cuisine": "...", "reason
     return parseJSON(text, [])
   },
 
+  // Serie TV simili: Gemini-first, Groq fallback
+  async getSimilarShows(show, watchedTitles = []) {
+    const watched = watchedTitles.length ? `L'utente ha già visto: ${watchedTitles.slice(0, 20).join(', ')}.` : ''
+    const title = show.name || show.show_title
+    const year = (show.first_air_date || show.show_year || '').slice(0, 4)
+    const prompt = `Sei un esperto di serie TV. L'utente ha amato "${title}"${year ? ` (${year})` : ''}${show.rating ? ` e gli ha dato ${show.rating}/5` : ''}.
+${watched}
+Suggerisci 6 serie TV simili NON già viste. Per ognuna: titolo, anno di inizio, motivazione e stelle di affinità (1-5).
+Rispondi SOLO in JSON: [{"title": "...", "original_title": "...", "year": "...", "reason": "...", "stars": 4}]`
+
+    try {
+      const text = await askGemini(prompt)
+      const result = parseJSON(text, null)
+      if (result) return result
+    } catch {}
+
+    const text = await askGroq(prompt)
+    return parseJSON(text, [])
+  },
+
+  // Consigli serie personalizzati: Groq → classiche, Gemini → recenti
+  async getPersonalizedShowSuggestions(watchedShows) {
+    if (!watchedShows?.length) return { classics: [], recent: [] }
+
+    const favorites = watchedShows.filter(s => s.is_favorite).slice(0, 10)
+    const recent = watchedShows.slice(0, 15)
+    const favTitles = favorites.map(s => s.show_title).join(', ') || 'nessuna ancora'
+    const recentTitles = recent.map(s => `${s.show_title}${s.rating ? ` (voto ${s.rating}/5)` : ''}`).join(', ')
+
+    const classicsPrompt = `Sei un esperto di serie TV.
+Serie preferite dell'utente: ${favTitles}
+Serie viste con voto: ${recentTitles}
+Suggerisci 3 serie TV CLASSICHE (andate in onda prima del 2015) che potrebbero piacergli.
+Per ognuna: titolo originale, anno di inizio, motivazione e stelle di affinità (1-5).
+Rispondi SOLO in JSON: [{"title": "...", "original_title": "...", "year": "...", "reason": "...", "stars": 4}]`
+
+    const recentPrompt = `Sei un esperto di serie TV aggiornato.
+Serie preferite dell'utente: ${favTitles}
+Serie viste con voto: ${recentTitles}
+Suggerisci 3 serie TV RECENTI (dal 2015 in poi) che potrebbero piacergli.
+Per ognuna: titolo originale, anno di inizio, motivazione e stelle di affinità (1-5).
+Rispondi SOLO in JSON: [{"title": "...", "original_title": "...", "year": "...", "reason": "...", "stars": 4}]`
+
+    const [classicsText, recentText] = await Promise.allSettled([
+      askGroq(classicsPrompt),
+      askGemini(recentPrompt).catch(() => askGroq(recentPrompt))
+    ])
+
+    const classics = classicsText.status === 'fulfilled' ? parseJSON(classicsText.value, []) : []
+    const recentData = recentText.status === 'fulfilled' ? parseJSON(recentText.value, []) : []
+    return { classics, recent: recentData }
+  },
+
   // Consigli ristoranti personalizzati: Gemini-first, Groq fallback
   async getPersonalizedRestaurantSuggestions(visitedRestaurants) {
     if (!visitedRestaurants?.length) return []

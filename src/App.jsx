@@ -7,6 +7,7 @@ import Sidebar from './components/layout/Sidebar.jsx'
 import CinemaPage from './components/cinema/CinemaPage.jsx'
 import BooksPage from './components/books/BooksPage.jsx'
 import RistorantiPage from './components/restaurants/RistorantiPage.jsx'
+import TvPage from './components/tv/TvPage.jsx'
 import NotificationsPage from './components/cinema/NotificationsPage.jsx'
 import ProfilePage from './components/cinema/ProfilePage.jsx'
 import { db } from './lib/db.js'
@@ -37,14 +38,16 @@ function AppShell() {
   useEffect(() => {
     if (!user) return
     const checkUnread = async () => {
-      const [movies, books, restaurants] = await Promise.all([
+      const [movies, books, restaurants, shows] = await Promise.all([
         db.getSuggestions(user.id),
         db.getBookSuggestions(user.id),
-        db.getRestaurantSuggestions(user.id)
+        db.getRestaurantSuggestions(user.id),
+        db.getShowSuggestions(user.id)
       ])
       const total = movies.filter(s => !s.read).length
                   + books.filter(s => !s.read).length
                   + restaurants.filter(s => !s.read).length
+                  + shows.filter(s => !s.read).length
       setUnreadCount(total)
     }
     checkUnread()
@@ -85,6 +88,7 @@ function AppShell() {
           <Route path="/cinema" element={<CinemaPage />} />
           <Route path="/books" element={<BooksPage />} />
           <Route path="/ristoranti" element={<RistorantiPage />} />
+          <Route path="/tv" element={<TvPage />} />
           <Route path="/travel" element={<ComingSoon title="Viaggi — In arrivo!" />} />
           <Route path="/notifications" element={<NotificationsPage onRead={() => setUnreadCount(0)} />} />
           <Route path="/profile" element={<ProfilePage />} />

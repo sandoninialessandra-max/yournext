@@ -334,5 +334,87 @@ async getSuggestions(userId) {
   async removeUserCity(userId, cityName) {
     return supabase.from('user_cities').delete().eq('user_id', userId).eq('city_name', cityName)
   },
+
+  // ── SERIE TV ──
+  async getWatchedShows(userId) {
+    const { data } = await supabase.from('watched_shows').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+    return data || []
+  },
+
+  async addWatchedShow(userId, show, status = 'watching') {
+    const { error } = await supabase.from('watched_shows').upsert({
+      user_id: userId,
+      show_id: show.id,
+      show_title: show.name || show.show_title,
+      show_poster: show.poster_path || show.show_poster || null,
+      show_year: (show.first_air_date || show.show_year || '').slice(0, 4),
+      status
+    }, { onConflict: 'user_id,show_id' })
+    if (error) throw error
+  },
+
+  async removeWatchedShow(userId, showId) {
+    return supabase.from('watched_shows').delete().eq('user_id', userId).eq('show_id', showId)
+  },
+
+  async updateShowStatus(userId, showId, status) {
+    return supabase.from('watched_shows').update({ status }).eq('user_id', userId).eq('show_id', showId)
+  },
+
+  async updateShowRating(userId, showId, rating) {
+    return supabase.from('watched_shows').update({ rating }).eq('user_id', userId).eq('show_id', showId)
+  },
+
+  async toggleShowFavorite(userId, showId, current) {
+    return supabase.from('watched_shows').update({ is_favorite: !current }).eq('user_id', userId).eq('show_id', showId)
+  },
+
+  async getWatchedEpisodes(userId, showId) {
+    const { data } = await supabase.from('watched_episodes').select('season_number,episode_number').eq('user_id', userId).eq('show_id', showId)
+    return data || []
+  },
+
+  async markEpisodeWatched(userId, showId, seasonNumber, episodeNumber) {
+    return supabase.from('watched_episodes').upsert(
+      { user_id: userId, show_id: showId, season_number: seasonNumber, episode_number: episodeNumber },
+      { onConflict: 'user_id,show_id,season_number,episode_number' }
+    )
+  },
+
+  async unmarkEpisodeWatched(userId, showId, seasonNumber, episodeNumber) {
+    return supabase.from('watched_episodes').delete()
+      .eq('user_id', userId).eq('show_id', showId)
+      .eq('season_number', seasonNumber).eq('episode_number', episodeNumber)
+  },
+
+  async markSeasonWatched(userId, showId, seasonNumber, episodeNumbers) {
+    const rows = episodeNumbers.map(ep => ({ user_id: userId, show_id: showId, season_number: seasonNumber, episode_number: ep }))
+    return supabase.from('watched_episodes').upsert(rows, { onConflict: 'user_id,show_id,season_number,episode_number' })
+  },
+
+  async unmarkSeasonWatched(userId, showId, seasonNumber) {
+    return supabase.from('watched_episodes').delete()
+      .eq('user_id', userId).eq('show_id', showId).eq('season_number', seasonNumber)
+  },
+
+  async sendShowSuggestion(fromUserId, toUserId, show, comment = '') {
+    return supabase.from('show_suggestions').insert({
+      from_user_id: fromUserId,
+      to_user_id: toUserId,
+      show_id: show.id,
+      show_title: show.name || show.show_title,
+      show_poster: show.poster_path || show.show_poster || null,
+      show_year: (show.first_air_date || show.show_year || '').slice(0, 4),
+      comment
+    })
+  },
+
+  async getShowSuggestions(userId) {
+    return joinSenderProfiles(await fetchSuggestions('show_suggestions', userId))
+  },
+
+  async markShowSuggestionRead(suggestionId) {
+    return supabase.from('show_suggestions').update({ read: true }).eq('id', suggestionId)
+  },
 }
 

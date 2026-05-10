@@ -253,3 +253,73 @@ CREATE POLICY "restaurant_suggestions_insert" ON restaurant_suggestions FOR INSE
 DROP POLICY IF EXISTS "restaurant_suggestions_update" ON restaurant_suggestions;
 CREATE POLICY "restaurant_suggestions_update" ON restaurant_suggestions FOR UPDATE TO authenticated
   USING (auth.uid() = to_user_id);
+
+-- =========================================
+-- ── SERIE TV ─────────────────────────────
+-- =========================================
+
+-- Serie seguite/completate/wishlist (per-utente)
+CREATE TABLE IF NOT EXISTS watched_shows (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  show_id INTEGER NOT NULL,
+  show_title TEXT NOT NULL,
+  show_poster TEXT,
+  show_year TEXT,
+  status TEXT DEFAULT 'watching' CHECK (status IN ('watching', 'completed', 'wishlist')),
+  rating NUMERIC(2,1) CHECK (rating >= 0.5 AND rating <= 5),
+  is_favorite BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, show_id)
+);
+
+-- Episodi visti (una riga per episodio)
+CREATE TABLE IF NOT EXISTS watched_episodes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  show_id INTEGER NOT NULL,
+  season_number INTEGER NOT NULL,
+  episode_number INTEGER NOT NULL,
+  watched_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, show_id, season_number, episode_number)
+);
+
+-- Suggerimenti serie tra amici
+CREATE TABLE IF NOT EXISTS show_suggestions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  from_user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  to_user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  show_id INTEGER NOT NULL,
+  show_title TEXT NOT NULL,
+  show_poster TEXT,
+  show_year TEXT,
+  comment TEXT DEFAULT '',
+  read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE watched_shows ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "shows_select" ON watched_shows;
+DROP POLICY IF EXISTS "shows_insert" ON watched_shows;
+DROP POLICY IF EXISTS "shows_update" ON watched_shows;
+DROP POLICY IF EXISTS "shows_delete" ON watched_shows;
+CREATE POLICY "shows_select" ON watched_shows FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "shows_insert" ON watched_shows FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "shows_update" ON watched_shows FOR UPDATE TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "shows_delete" ON watched_shows FOR DELETE TO authenticated USING (auth.uid() = user_id);
+
+ALTER TABLE watched_episodes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "episodes_select" ON watched_episodes;
+DROP POLICY IF EXISTS "episodes_insert" ON watched_episodes;
+DROP POLICY IF EXISTS "episodes_delete" ON watched_episodes;
+CREATE POLICY "episodes_select" ON watched_episodes FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "episodes_insert" ON watched_episodes FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "episodes_delete" ON watched_episodes FOR DELETE TO authenticated USING (auth.uid() = user_id);
+
+ALTER TABLE show_suggestions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "show_sugg_select" ON show_suggestions;
+DROP POLICY IF EXISTS "show_sugg_insert" ON show_suggestions;
+DROP POLICY IF EXISTS "show_sugg_update" ON show_suggestions;
+CREATE POLICY "show_sugg_select" ON show_suggestions FOR SELECT TO authenticated USING (auth.uid() = from_user_id OR auth.uid() = to_user_id);
+CREATE POLICY "show_sugg_insert" ON show_suggestions FOR INSERT TO authenticated WITH CHECK (auth.uid() = from_user_id);
+CREATE POLICY "show_sugg_update" ON show_suggestions FOR UPDATE TO authenticated USING (auth.uid() = to_user_id);

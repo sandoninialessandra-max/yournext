@@ -8,19 +8,21 @@ export default function NotificationsPage({ onRead }) {
   const { user } = useAuth()
   const [suggestions, setSuggestions] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('tutti') // 'tutti' | 'film' | 'libri' | 'ristoranti'
+  const [filter, setFilter] = useState('tutti') // 'tutti' | 'film' | 'libri' | 'ristoranti' | 'serie'
 
   useEffect(() => {
     if (!user) return
     Promise.all([
       db.getSuggestions(user.id),
       db.getBookSuggestions(user.id),
-      db.getRestaurantSuggestions(user.id)
-    ]).then(([movies, books, restaurants]) => {
+      db.getRestaurantSuggestions(user.id),
+      db.getShowSuggestions(user.id)
+    ]).then(([movies, books, restaurants, shows]) => {
       const all = [
         ...movies.map(s => ({ ...s, type: 'film' })),
         ...books.map(s => ({ ...s, type: 'libro' })),
-        ...restaurants.map(s => ({ ...s, type: 'ristorante' }))
+        ...restaurants.map(s => ({ ...s, type: 'ristorante' })),
+        ...shows.map(s => ({ ...s, type: 'serie' }))
       ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 
       setSuggestions(all)
@@ -30,11 +32,12 @@ export default function NotificationsPage({ onRead }) {
       movies.filter(s => !s.read).forEach(s => db.markSuggestionRead(s.id))
       books.filter(s => !s.read).forEach(s => db.markBookSuggestionRead(s.id))
       restaurants.filter(s => !s.read).forEach(s => db.markRestaurantSuggestionRead(s.id))
+      shows.filter(s => !s.read).forEach(s => db.markShowSuggestionRead(s.id))
       onRead?.()
     })
   }, [user])
 
-  const FILTER_TYPE = { film: 'film', libri: 'libro', ristoranti: 'ristorante' }
+  const FILTER_TYPE = { film: 'film', libri: 'libro', ristoranti: 'ristorante', serie: 'serie' }
   const displayed = filter === 'tutti'
     ? suggestions
     : suggestions.filter(s => s.type === FILTER_TYPE[filter])
@@ -62,8 +65,8 @@ export default function NotificationsPage({ onRead }) {
       <div className="section">
         {/* Filtro film/libri */}
         {suggestions.length > 0 && (
-          <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-            {['tutti', 'film', 'libri', 'ristoranti'].map(f => (
+          <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+            {['tutti', 'film', 'libri', 'ristoranti', 'serie'].map(f => (
               <button
                 key={f}
                 className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-secondary'}`}
@@ -72,7 +75,8 @@ export default function NotificationsPage({ onRead }) {
                 {f === 'tutti' ? `Tutti (${suggestions.length})`
                   : f === 'film' ? `🎬 Film (${suggestions.filter(s => s.type === 'film').length})`
                   : f === 'libri' ? `📚 Libri (${suggestions.filter(s => s.type === 'libro').length})`
-                  : `🍽️ Ristoranti (${suggestions.filter(s => s.type === 'ristorante').length})`}
+                  : f === 'ristoranti' ? `🍽️ Ristoranti (${suggestions.filter(s => s.type === 'ristorante').length})`
+                  : `📺 Serie TV (${suggestions.filter(s => s.type === 'serie').length})`}
               </button>
             ))}
           </div>
@@ -89,17 +93,20 @@ export default function NotificationsPage({ onRead }) {
                 const isFilm = s.type === 'film'
                 const isBook = s.type === 'libro'
                 const isRestaurant = s.type === 'ristorante'
+                const isShow = s.type === 'serie'
                 const poster = isFilm
                   ? (s.movie_poster ? tmdb.posterUrl(s.movie_poster, 'w92') : null)
                   : isBook
                   ? (s.book_cover || null)
-                  : (s.restaurant_cover || null)
-                const title = isFilm ? s.movie_title : isBook ? s.book_title : s.restaurant_name
-                const year = isFilm ? s.movie_year : null
-                const sub = isFilm ? null : isBook ? s.book_authors : (s.restaurant_cuisine || s.restaurant_city)
-                const fallbackEmoji = isFilm ? '🎬' : isBook ? '📚' : '🍽️'
-                const kindLabel = isFilm ? 'un film' : isBook ? 'un libro' : 'un ristorante'
-                const tagLabel = isFilm ? '🎬 Film' : isBook ? '📚 Libro' : '🍽️ Ristorante'
+                  : isRestaurant
+                  ? (s.restaurant_cover || null)
+                  : (s.show_poster ? tmdb.posterUrl(s.show_poster, 'w92') : null)
+                const title = isFilm ? s.movie_title : isBook ? s.book_title : isRestaurant ? s.restaurant_name : s.show_title
+                const year = isFilm ? s.movie_year : isShow ? s.show_year : null
+                const sub = isFilm ? null : isBook ? s.book_authors : isRestaurant ? (s.restaurant_cuisine || s.restaurant_city) : null
+                const fallbackEmoji = isFilm ? '🎬' : isBook ? '📚' : isRestaurant ? '🍽️' : '📺'
+                const kindLabel = isFilm ? 'un film' : isBook ? 'un libro' : isRestaurant ? 'un ristorante' : 'una serie TV'
+                const tagLabel = isFilm ? '🎬 Film' : isBook ? '📚 Libro' : isRestaurant ? '🍽️ Ristorante' : '📺 Serie TV'
 
                 return (
                   <div key={`${s.type}-${s.id}`} className={`suggestion-card ${!s.read ? 'unread' : ''}`}>

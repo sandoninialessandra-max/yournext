@@ -50,5 +50,39 @@ export const tmdb = {
       buy: providers.buy || [],
       link: providers.link
     }
-  }
+  },
+
+  async searchTv(query) {
+    const r = await fetch(`${TMDB_BASE}/search/tv?api_key=${TMDB_KEY}&query=${encodeURIComponent(query)}&language=it-IT`)
+    const d = await r.json()
+    return d.results || []
+  },
+
+  async getTvShow(id) {
+    const r = await fetch(`${TMDB_BASE}/tv/${id}?api_key=${TMDB_KEY}&language=it-IT&append_to_response=watch/providers,similar`)
+    return r.json()
+  },
+
+  async getTvSeason(showId, seasonNumber) {
+    const r = await fetch(`${TMDB_BASE}/tv/${showId}/season/${seasonNumber}?api_key=${TMDB_KEY}&language=it-IT`)
+    return r.json()
+  },
+
+  async getTrendingTv() {
+    const r = await fetch(`${TMDB_BASE}/trending/tv/week?api_key=${TMDB_KEY}&language=it-IT`)
+    const d = await r.json()
+    return d.results || []
+  },
+
+  async getPopularTv() {
+    const r = await fetch(`${TMDB_BASE}/tv/popular?api_key=${TMDB_KEY}&language=it-IT`)
+    const d = await r.json()
+    return d.results || []
+  },
+
+  getTvWatchProviders(showData) {
+    const providers = showData?.['watch/providers']?.results?.IT
+    if (!providers) return { flatrate: [], rent: [], link: null }
+    return { flatrate: providers.flatrate || [], rent: providers.rent || [], link: providers.link }
+  },
 }
