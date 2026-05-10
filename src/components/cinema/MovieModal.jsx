@@ -5,6 +5,7 @@ import { db } from '../../lib/db.js'
 import { ai } from '../../lib/gemini.js'
 import { useAuth } from '../../hooks/useAuth.jsx'
 import { useToast } from '../shared/Toast.jsx'
+import StarRating from '../shared/StarRating.jsx'
 
 const TMDB_LOGO = 'https://image.tmdb.org/t/p/original'
 
@@ -24,7 +25,6 @@ export default function MovieModal({ movieId, onClose, watchedMovies, onUpdate }
   const [sendComment, setSendComment] = useState('')
   const [sendingTo, setSendingTo] = useState(null)
   const [rating, setRating] = useState(0)
-  const [hoverRating, setHoverRating] = useState(0)
 
   const watched = watchedMovies?.find(w => w.movie_id === movieId)
   const isWatched = !!watched
@@ -180,45 +180,13 @@ export default function MovieModal({ movieId, onClose, watchedMovies, onUpdate }
 		</div>
 
           {/* Rating */}
-			{isWatched && (
-			  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
-				<span style={{ fontSize: 12, color: 'var(--text3)' }}>Voto:</span>
-				<div style={{ display: 'flex', gap: 2 }}>
-				  {[1, 2, 3, 4, 5].map(s => {
-					const val = hoverRating || rating
-					const full = val >= s
-					const half = !full && val >= s - 0.5
-					return (
-					  <span key={s} style={{ position: 'relative', display: 'inline-block', width: 24, height: 24, cursor: 'pointer' }}
-						onMouseLeave={() => setHoverRating(0)}>
-						<svg width="24" height="24" viewBox="0 0 24 24">
-						  <defs>
-							<linearGradient id={`star-${s}`}>
-							  <stop offset="50%" stopColor={half || full ? 'var(--accent)' : 'var(--text3)'} />
-							  <stop offset="50%" stopColor={full ? 'var(--accent)' : 'var(--text3)'} />
-							</linearGradient>
-						  </defs>
-						  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-							fill={full ? 'var(--accent)' : half ? `url(#star-${s})` : 'var(--text3)'}
-							stroke="none" />
-						</svg>
-						<span style={{ position: 'absolute', left: 0, width: '50%', height: '100%', zIndex: 2, top: 0 }}
-						  onMouseEnter={() => setHoverRating(s - 0.5)}
-						  onClick={e => { e.stopPropagation(); handleRating(s - 0.5) }} />
-						<span style={{ position: 'absolute', right: 0, width: '50%', height: '100%', zIndex: 2, top: 0 }}
-						  onMouseEnter={() => setHoverRating(s)}
-						  onClick={e => { e.stopPropagation(); handleRating(s) }} />
-					  </span>
-					)
-				  })}
-				</div>
-				{rating > 0 && (
-				  <button className="btn btn-ghost btn-sm" style={{ fontSize: 11, padding: '2px 6px' }}
-					onClick={() => handleRating(0)}>✕</button>
-				)}
-				{rating > 0 && <span style={{ fontSize: 11, color: 'var(--text3)' }}>{rating}/5</span>}
-			  </div>
-			)}          
+          {isWatched && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
+              <span style={{ fontSize: 12, color: 'var(--text3)' }}>Voto:</span>
+              <StarRating value={rating} onChange={handleRating} />
+              {rating > 0 && <span style={{ fontSize: 11, color: 'var(--text3)' }}>{rating}/5</span>}
+            </div>
+          )}          
 
 {/* Send suggestion panel */}
           {sendModal && (
