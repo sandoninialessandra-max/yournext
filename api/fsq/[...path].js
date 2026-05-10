@@ -25,7 +25,9 @@ export default async function handler(req, res) {
 
   const forwardParams = new URLSearchParams()
   const rawQuery = req.url.includes('?') ? req.url.split('?')[1] : ''
-  new URLSearchParams(rawQuery).forEach((v, k) => forwardParams.set(k, v))
+  new URLSearchParams(rawQuery).forEach((v, k) => {
+    if (k !== '...path') forwardParams.set(k, v)
+  })
 
   const upstreamUrl = `https://places-api.foursquare.com/places${pathSuffix}?${forwardParams.toString()}`
 
