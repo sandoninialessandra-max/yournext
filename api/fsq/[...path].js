@@ -1,15 +1,19 @@
 export default async function handler(req, res) {
   const key = process.env.FOURSQUARE_API_KEY || process.env.VITE_FOURSQUARE_API_KEY
 
-  // diagnostic: /api/fsq/debug returns env info without exposing key value
-  const pathArr = req.query.path || []
-  if (pathArr[0] === 'debug') {
+  // parse path directly from URL — req.query.path is unreliable in Vercel catch-all
+  const urlPath = req.url.split('?')[0]
+  const pathSuffix = urlPath.replace(/^\/api\/fsq/, '') || '/'
+
+  // diagnostic endpoint
+  if (pathSuffix === '/debug') {
     res.status(200).json({
       FOURSQUARE_API_KEY: process.env.FOURSQUARE_API_KEY ? `set (${process.env.FOURSQUARE_API_KEY.length} chars)` : 'NOT SET',
       VITE_FOURSQUARE_API_KEY: process.env.VITE_FOURSQUARE_API_KEY ? `set (${process.env.VITE_FOURSQUARE_API_KEY.length} chars)` : 'NOT SET',
       NODE_ENV: process.env.NODE_ENV,
       VERCEL_PROJECT_ID: process.env.VERCEL_PROJECT_ID || 'n/a',
-      VERCEL_GIT_REPO_SLUG: process.env.VERCEL_GIT_REPO_SLUG || 'n/a',
+      parsedPath: pathSuffix,
+      rawUrl: req.url,
     })
     return
   }
@@ -19,14 +23,9 @@ export default async function handler(req, res) {
     return
   }
 
-  const pathSuffix = Array.isArray(pathArr) ? '/' + pathArr.join('/') : '/' + pathArr
-
   const forwardParams = new URLSearchParams()
-  for (const [k, v] of Object.entries(req.query)) {
-    if (k === 'path') continue
-    if (Array.isArray(v)) v.forEach((vv) => forwardParams.append(k, vv))
-    else forwardParams.set(k, v)
-  }
+  const rawQuery = req.url.includes('?') ? req.url.split('?')[1] : ''
+  new URLSearchParams(rawQuery).forEach((v, k) => forwardParams.set(k, v))
 
   const upstreamUrl = `https://places-api.foursquare.com/places${pathSuffix}?${forwardParams.toString()}`
 
