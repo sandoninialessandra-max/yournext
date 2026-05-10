@@ -1,8 +1,8 @@
-//Groq
+// Groq — film classici e fallback
 const GROQ_KEY = import.meta.env.VITE_GROQ_API_KEY
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
 
-// Gemini — provider primario per ristoranti (Groq fallback)
+// Gemini — film recenti, libri e ristoranti (Groq fallback)
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`
 
@@ -14,7 +14,7 @@ async function askGroq(prompt) {
       'Authorization': `Bearer ${GROQ_KEY}`
     },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile', //'llama-3.1-8b-instant',
+      model: 'llama-3.3-70b-versatile',
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 1024,
       temperature: 0.8
@@ -50,52 +50,134 @@ function parseJSON(text, fallback) {
 }
 
 export const ai = {
-  async getSimilarMovies(movie, watchedTitles = []) {
-    const watched = watchedTitles.length ? `L'utente ha già visto: ${watchedTitles.slice(0, 20).join(', ')}.` : ''
-    const prompt = `Sei un esperto cinefilo. L'utente ha amato il film "${movie.title}" (${movie.release_date?.slice(0,4)}).
-${watched}
-Suggerisci 6 film simili che potrebbero piacergli, che NON siano già nella lista dei film visti.
-Per ogni film fornisci:
-- Titolo originale e anno
-- Una frase di motivazione (perché è simile/piacerà)
-Rispondi in italiano, in formato JSON array: [{"title": "...", "year": "...", "reason": "..."}]
-Solo JSON, nessun testo aggiuntivo.`
-    const text = await askGroq(prompt)
+
+  // Trama completa: Gemini-first, Groq fallback
+  async getFullPlot(movie) {
+    const prompt = `Sei un esperto di cinema. Scrivi la trama COMPLETA del film "${movie.title}" (anno: ${movie.release_date?.slice(0,4)}), includendo tutti gli spoiler, i colpi di scena e la conclusione finale. Rispondi in italiano, direttamente con la trama senza preamboli.
+REGOLA ASSOLUTA: se non ricordi ogni dettaglio con certezza, rispondi SOLO con "Trama non disponibile." senza aggiungere nulla. Preferisci sempre "Trama non disponibile" a qualsiasi dettaglio inventato o incerto.`
+
     try {
-      const clean = text.replace(/```json|```/g, '').trim()
-      return JSON.parse(clean)
-    } catch { return [] }
+      const geminiResult = await askGemini(prompt)
+      if (!geminiResult.toLowerCase().includes('trama non disponibile')) return geminiResult
+    } catch {}
+
+    const groqResult = await askGroq(prompt)
+    if (groqResult.toLowerCase().includes('trama non disponibile')) return null
+    return groqResult
   },
 
+  // Consigli personalizzati film: Groq → classici, Gemini → recenti + uscite
   async getPersonalizedSuggestions(watchedMovies, upcomingMovies) {
-    if (!watchedMovies?.length) return []
+    if (!watchedMovies?.length) return { classics: [], recent: [], upcoming: [] }
+
     const favorites = watchedMovies.filter(m => m.is_favorite).slice(0, 10)
     const recent = watchedMovies.slice(0, 15)
     const favTitles = favorites.map(m => m.movie_title).join(', ') || 'nessuno ancora'
-    const recentTitles = recent.map(m => m.movie_title).join(', ')
     const upcomingTitles = upcomingMovies?.slice(0, 20).map(m => `${m.title} (${m.release_date?.slice(0,4)})`).join(', ') || ''
-    const prompt = `Sei un esperto cinefilo personale. 
-Film preferiti dell'utente (cuore rosso): ${favTitles}
-Film recentemente visti: ${recentTitles}
-${upcomingTitles ? `Film in uscita prossimamente in Italia: ${upcomingTitles}` : ''}
-Basandoti sui gusti dell'utente:
-1. Suggerisci 3 film di archivio (classici o meno noti) che gli potrebbero piacere molto
-2. ${upcomingTitles ? 'Indica quali tra i film in uscita potrebbero interessargli di più (max 3)' : ''}
-Rispondi in italiano, formato JSON: 
-{"archive": [{"title": "...", "year": "...", "reason": "..."}], "upcoming": [{"title": "...", "reason": "..."}]}
-Solo JSON.`
-    const text = await askGroq(prompt)
+
+    const classicsPrompt = `Sei un esperto cinefilo.
+Film preferiti dell'utente: ${favTitles}
+Film visti con voto: ${recent.map(m => `${m.movie_title}${m.rating ? ` (voto ${m.rating}/5)` : ''}`).join(', ')}
+Suggerisci 3 film CLASSICI o di archivio (usciti prima del 2020) che potrebbero piacergli molto.
+Per ognuno indica anche un punteggio di affinità da 1 a 5 stelle.
+Rispondi SOLO in JSON: [{"title": "...", "original_title": "Original English Title", "year": "...", "reason": "...", "stars": 4}]`
+
+    const recentPrompt = `Sei un esperto cinefilo aggiornato sulle ultime uscite.
+Film preferiti dell'utente: ${favTitles}
+Film visti con voto: ${recent.map(m => `${m.movie_title}${m.rating ? ` (voto ${m.rating}/5)` : ''}`).join(', ')}
+${upcomingTitles ? `Film in uscita in Italia: ${upcomingTitles}` : ''}
+1. Suggerisci 2 film RECENTI (dal 2020 in poi) che potrebbero piacergli, con punteggio affinità da 1 a 5 stelle.
+2. ${upcomingTitles ? 'Indica max 2 film tra quelli in uscita che potrebbero interessargli, con punteggio affinità.' : ''}
+Rispondi SOLO in JSON: {"recent": [{"title": "...", "original_title": "Original English Title", "year": "...", "reason": "...", "stars": 4}], "upcoming": [{"title": "...", "reason": "...", "stars": 3}]}`
+
+    const [classicsText, recentText] = await Promise.allSettled([
+      askGroq(classicsPrompt),
+      askGemini(recentPrompt).catch(() => askGroq(recentPrompt))
+    ])
+
+    const classics = classicsText.status === 'fulfilled'
+      ? parseJSON(classicsText.value, []) : []
+    const recentData = recentText.status === 'fulfilled'
+      ? parseJSON(recentText.value, { recent: [], upcoming: [] }) : { recent: [], upcoming: [] }
+
+    return {
+      classics,
+      recent: recentData.recent || [],
+      upcoming: recentData.upcoming || []
+    }
+  },
+
+  // Film simili: Gemini-first, Groq fallback
+  async getSimilarMovies(movie, watchedTitles = []) {
+    const watched = watchedTitles.length ? `L'utente ha già visto: ${watchedTitles.slice(0, 20).join(', ')}.` : ''
+    const prompt = `Sei un esperto cinefilo. L'utente ha amato "${movie.title}" (${movie.release_date?.slice(0,4)})${movie.rating ? ` e gli ha dato ${movie.rating}/5` : ''}.
+${watched}
+Suggerisci 6 film simili NON già visti. Per ognuno: titolo, anno, motivazione e stelle di affinità (1-5).
+Rispondi SOLO in JSON: [{"title": "...", "original_title": "Original English Title", "year": "...", "reason": "...", "stars": 4}]`
+
     try {
-      const clean = text.replace(/```json|```/g, '').trim()
-      return JSON.parse(clean)
-    } catch { return { archive: [], upcoming: [] } }
+      const text = await askGemini(prompt)
+      const result = parseJSON(text, null)
+      if (result) return result
+    } catch {}
+
+    const text = await askGroq(prompt)
+    return parseJSON(text, [])
   },
 
-  async getFullPlot(movie) {
-    const prompt = `Scrivi una trama COMPLETA e dettagliata del film "${movie.title}" (${movie.release_date?.slice(0,4)}), includendo tutti gli spoiler, colpi di scena finali e la conclusione. Sii esaustivo (almeno 300 parole). Rispondi in italiano. IMPORTANTE: se non conosci questo film con certezza, rispondi SOLO con la frase "Trama non disponibile per questo film." senza aggiungere nulla altro. Non inventare mai trame o dettagli.`
-    return askGroq(prompt)
+  // Libri simili: Gemini-first, Groq fallback
+  async getSimilarBooks(book, readTitles = []) {
+    const read = readTitles.length ? `L'utente ha già letto: ${readTitles.slice(0, 20).join(', ')}.` : ''
+    const prompt = `Sei un esperto letterario. L'utente ha amato "${book.title}" di ${book.authors || 'autore sconosciuto'}.
+${read}
+Suggerisci 6 libri simili NON già letti. Per ognuno: titolo, autore, anno, motivazione e stelle di affinità (1-5).
+Rispondi SOLO in JSON: [{"title": "...", "original_title": "...", "authors": "...", "year": "...", "reason": "...", "stars": 4}]`
+
+    try {
+      const text = await askGemini(prompt)
+      const result = parseJSON(text, null)
+      if (result) return result
+    } catch {}
+
+    const text = await askGroq(prompt)
+    return parseJSON(text, [])
   },
 
+  // Consigli libri personalizzati: Groq → classici, Gemini → recenti
+  async getPersonalizedBookSuggestions(readBooks) {
+    if (!readBooks?.length) return { classics: [], recent: [] }
+
+    const favorites = readBooks.filter(b => b.is_favorite).slice(0, 10)
+    const recent = readBooks.slice(0, 15)
+    const favTitles = favorites.map(b => b.book_title).join(', ') || 'nessuno ancora'
+    const recentTitles = recent.map(b => `${b.book_title}${b.rating ? ` (voto ${b.rating}/5)` : ''}`).join(', ')
+
+    const classicsPrompt = `Sei un esperto letterario.
+Libri preferiti dell'utente: ${favTitles}
+Libri letti con voto: ${recentTitles}
+Suggerisci 3 libri CLASSICI (pubblicati prima del 2000) che potrebbero piacergli molto.
+Per ognuno: titolo, autore, anno, motivazione e stelle di affinità (1-5).
+Rispondi SOLO in JSON: [{"title": "...", "original_title": "...", "authors": "...", "year": "...", "reason": "...", "stars": 4}]`
+
+    const recentPrompt = `Sei un esperto letterario aggiornato.
+Libri preferiti dell'utente: ${favTitles}
+Libri letti con voto: ${recentTitles}
+Suggerisci 3 libri RECENTI (dal 2010 in poi) che potrebbero piacergli.
+Per ognuno: titolo, autore, anno, motivazione e stelle di affinità (1-5).
+Rispondi SOLO in JSON: [{"title": "...", "original_title": "...", "authors": "...", "year": "...", "reason": "...", "stars": 4}]`
+
+    const [classicsText, recentText] = await Promise.allSettled([
+      askGroq(classicsPrompt),
+      askGemini(recentPrompt).catch(() => askGroq(recentPrompt))
+    ])
+
+    const classics = classicsText.status === 'fulfilled' ? parseJSON(classicsText.value, []) : []
+    const recentData = recentText.status === 'fulfilled' ? parseJSON(recentText.value, []) : []
+
+    return { classics, recent: recentData }
+  },
+
+  // Ristoranti simili: Gemini-first, Groq fallback
   async getSimilarRestaurants(place, visitedTitles = []) {
     const visited = visitedTitles.length ? `L'utente ha già visitato: ${visitedTitles.slice(0, 20).join(', ')}.` : ''
     const cityHint = place.city ? ` a ${place.city}` : ''
@@ -115,6 +197,7 @@ Rispondi SOLO in JSON: [{"name": "...", "city": "...", "cuisine": "...", "reason
     return parseJSON(text, [])
   },
 
+  // Consigli ristoranti personalizzati: Gemini-first, Groq fallback
   async getPersonalizedRestaurantSuggestions(visitedRestaurants) {
     if (!visitedRestaurants?.length) return []
 
@@ -159,80 +242,3 @@ Rispondi SOLO in JSON: [{"name": "...", "city": "...", "cuisine": "...", "reason
     return parseJSON(text, [])
   }
 }
-/*Gemini
-const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`
-
-async function askGemini(prompt) {
-  const res = await fetch(GEMINI_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.8, maxOutputTokens: 1024 }
-    })
-  })
-  
-  if (!res.ok) {
-    const errData = await res.json()
-    console.error('Gemini error:', JSON.stringify(errData))
-    throw new Error(`Gemini ${res.status}`)
-  }
-  
-  const data = await res.json()
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-}
-
-export const ai = {
-  async getSimilarMovies(movie, watchedTitles = []) {
-    const watched = watchedTitles.length ? `L'utente ha già visto: ${watchedTitles.slice(0, 20).join(', ')}.` : ''
-    const prompt = `Sei un esperto cinefilo. L'utente ha amato il film "${movie.title}" (${movie.release_date?.slice(0,4)}).
-${watched}
-Suggerisci 6 film simili che potrebbero piacergli, che NON siano già nella lista dei film visti.
-Per ogni film fornisci:
-- Titolo originale e anno
-- Una frase di motivazione (perché è simile/piacerà)
-Rispondi in italiano, in formato JSON array: [{"title": "...", "year": "...", "reason": "..."}]
-Solo JSON, nessun testo aggiuntivo.`
-    const text = await askGemini(prompt)
-    try {
-      const clean = text.replace(/```json|```/g, '').trim()
-      return JSON.parse(clean)
-    } catch { return [] }
-  },
-
-  async getPersonalizedSuggestions(watchedMovies, upcomingMovies) {
-    if (!watchedMovies?.length) return []
-    const favorites = watchedMovies.filter(m => m.is_favorite).slice(0, 10)
-    const recent = watchedMovies.slice(0, 15)
-    const favTitles = favorites.map(m => m.movie_title).join(', ') || 'nessuno ancora'
-    const recentTitles = recent.map(m => m.movie_title).join(', ')
-    const upcomingTitles = upcomingMovies?.slice(0, 20).map(m => `${m.title} (${m.release_date?.slice(0,4)})`).join(', ') || ''
-
-    const prompt = `Sei un esperto cinefilo personale. 
-Film preferiti dell'utente (cuore rosso): ${favTitles}
-Film recentemente visti: ${recentTitles}
-${upcomingTitles ? `Film in uscita prossimamente in Italia: ${upcomingTitles}` : ''}
-
-Basandoti sui gusti dell'utente:
-1. Suggerisci 3 film di archivio (classici o meno noti) che gli potrebbero piacere molto
-2. ${upcomingTitles ? 'Indica quali tra i film in uscita potrebbero interessargli di più (max 3)' : ''}
-
-Rispondi in italiano, formato JSON: 
-{
-  "archive": [{"title": "...", "year": "...", "reason": "..."}],
-  "upcoming": [{"title": "...", "reason": "..."}]
-}
-Solo JSON.`
-    const text = await askGemini(prompt)
-    try {
-      const clean = text.replace(/```json|```/g, '').trim()
-      return JSON.parse(clean)
-    } catch { return { archive: [], upcoming: [] } }
-  },
-
-  async getFullPlot(movie) {
-    const prompt = `Scrivi una trama COMPLETA e dettagliata del film "${movie.title}" (${movie.release_date?.slice(0,4)}), includendo tutti gli spoiler, colpi di scena finali e la conclusione. Sii esaustivo (almeno 300 parole). Rispondi in italiano.`
-    return askGemini(prompt)
-  }
-}*/
