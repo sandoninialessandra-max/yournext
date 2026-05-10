@@ -19,7 +19,15 @@ export default async function handler(req, res) {
   }
 
   if (!key) {
-    res.status(500).json({ error: 'FOURSQUARE_API_KEY not configured on server' })
+    res.status(500).json({
+      error: 'FOURSQUARE_API_KEY not configured on server',
+      debug: {
+        FSQ: process.env.FOURSQUARE_API_KEY ? `${process.env.FOURSQUARE_API_KEY.length}c` : 'unset',
+        VITE_FSQ: process.env.VITE_FOURSQUARE_API_KEY ? `${process.env.VITE_FOURSQUARE_API_KEY.length}c` : 'unset',
+        rawUrl: req.url,
+        pathSuffix,
+      }
+    })
     return
   }
 
