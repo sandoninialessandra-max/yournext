@@ -35,6 +35,7 @@ export default async function handler(req, res) {
         Accept: 'application/json',
         Authorization: `Bearer ${key}`,
         'X-Places-Api-Version': '2025-06-17',
+        'Accept-Language': 'it-IT, it',
       },
     })
     const body = await upstream.text()
