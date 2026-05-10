@@ -11,7 +11,7 @@ import RestaurantPlaceholder from './RestaurantPlaceholder.jsx'
 
 const TABS = ['I miei ristoranti', 'Scopri', 'Consigli AI']
 const CATEGORIES = ['Aperitivo', 'Cena', 'Romantico', 'Pizza', 'Italiano', 'Giapponese', 'Cinese', 'Hamburger']
-const FIXED_LABELS = ["🌳 All'aperto", '💎 Particolare', '🌅 Vista', '🍽️ Cena', '🍹 Aperitivo', '☀️ Pranzo', '🍺 Pub']
+const FIXED_LABELS = ["🌳 All'aperto", '💎 Particolare', '🌅 Vista', '🍽️ Cena', '🍹 Aperitivo', '☀️ Pranzo', '🍺 Pub', '💸 Low cost']
 const priceSymbol = (n) => n ? '€'.repeat(n) : '—'
 
 export default function RistorantiPage() {
